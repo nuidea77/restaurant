@@ -9,7 +9,8 @@ import { LISTING_FEE } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
 
 export default async function NewRestaurantPage() {
-  if (!(await currentUserId())) redirect("/login");
+  const userId = await currentUserId();
+  if (!userId) redirect("/login");
 
   return (
     <>
@@ -20,10 +21,10 @@ export default async function NewRestaurantPage() {
         <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Ресторан нэмэх</h1>
         <ol className="mt-4 flex flex-wrap gap-2 text-sm">
           <Step n={1} active>
-            Мэдээлэл
+            Мэдээлэл, байршил, цэс
           </Step>
           <Step n={2}>Төлбөр · {formatMNT(LISTING_FEE)}</Step>
-          <Step n={3}>Цэс, зураг</Step>
+          <Step n={3}>Багцаа шалгаж нийтлэх</Step>
         </ol>
       </Section>
       <Divider />
@@ -31,7 +32,7 @@ export default async function NewRestaurantPage() {
         <Card className="overflow-hidden">
           <CardBar icon={<Store />} title="Рестораны мэдээлэл" />
           <div className="p-5">
-            <ProfileForm restaurant={null} />
+            <ProfileForm restaurant={null} userId={userId} />
           </div>
         </Card>
       </Section>

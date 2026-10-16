@@ -4,6 +4,7 @@ import type { MenuPackage, OwnerRestaurant, Restaurant, RestaurantSearchRow } fr
 
 
 export type SearchFilters = {
+  city?: string;
   district?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -18,7 +19,7 @@ export type SearchFilters = {
 /** Баталгаажсан багцтай ресторануудыг 1 хүний үнэ, багтаамж, дүүрэг, нөхцөлөөр шүүнэ. */
 export function searchRestaurants(f: SearchFilters) {
   return sql<RestaurantSearchRow>`
-    select r.id, r.name, r.district, r.address, r.phone, r.capacity,
+    select r.id, r.name, r.city, r.district, r.address, r.phone, r.capacity,
            r.has_host, r.has_stage, r.has_screen, r.has_parking, r.images,
            min(p.price_per_person)::float8 as min_price,
            max(p.price_per_person)::float8 as max_price,
@@ -30,6 +31,7 @@ export function searchRestaurants(f: SearchFilters) {
      and (${f.minPrice ?? null}::numeric is null or p.price_per_person >= ${f.minPrice ?? null}::numeric)
      and (${f.maxPrice ?? null}::numeric is null or p.price_per_person <= ${f.maxPrice ?? null}::numeric)
     where r.is_paid
+      and (${f.city ?? null}::text is null or r.city = ${f.city ?? null}::text)
       and (${f.district ?? null}::text is null or r.district = ${f.district ?? null}::text)
       and (${f.minCapacity ?? null}::int is null or r.capacity >= ${f.minCapacity ?? null}::int)
       and (${f.maxCapacity ?? null}::int is null or r.capacity <= ${f.maxCapacity ?? null}::int)

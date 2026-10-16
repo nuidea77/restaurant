@@ -118,3 +118,7 @@ create table if not exists phone_verifications (
   created_at timestamp with time zone default now()
 );
 create index if not exists idx_phone_verifications_user on phone_verifications(user_id, created_at desc);
+
+-- Хот/аймаг (Улаанбаатараас гадна). Дүүрэг баганад УБ-ын дүүрэг эсвэл сум/хороо хадгална.
+alter table restaurants add column if not exists city varchar(100) not null default 'Улаанбаатар';
+create index if not exists idx_restaurant_city on restaurants(city);

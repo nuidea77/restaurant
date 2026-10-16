@@ -81,7 +81,7 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
         <Card className="overflow-hidden">
           <CardBar icon={<Store />} title="Профайл" />
           <div className="p-5">
-            <ProfileForm restaurant={restaurant} />
+            <ProfileForm restaurant={restaurant} userId={userId} />
           </div>
         </Card>
 

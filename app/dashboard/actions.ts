@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { DISTRICTS } from "@/lib/constants";
+import { CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
 import { verifiedUserId } from "@/lib/guards";
 import { sql } from "@/lib/db";
@@ -11,7 +11,7 @@ import { appOrigin } from "@/lib/origin";
 import { confirmDemoPayment, startBylCheckout } from "@/lib/payments";
 import { isOwnBlobUrl } from "@/lib/blob";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
 async function requireUser() {
   // Утас баталгаажаагүй хэрэглэгч ресторан нэмж, засах боломжгүй.
@@ -24,7 +24,8 @@ const optionalCoord = z.preprocess((v) => (v === "" || v == null ? null : Number
 
 const ProfileSchema = z.object({
   name: z.string().trim().min(1, "Нэр оруулна уу").max(255),
-  district: z.enum(DISTRICTS, { message: "Дүүрэг сонгоно уу" }),
+  city: z.enum(CITIES, { message: "Хот / аймаг сонгоно уу" }),
+  district: z.string().trim().min(1, "Дүүрэг / сум оруулна уу").max(100),
   address: z.string().trim().min(1, "Хаяг оруулна уу"),
   phone: z.string().trim().min(6, "Утасны дугаар оруулна уу").max(50),
   capacity: z.coerce.number().int().positive("Багтаамж 0-ээс их байна"),
@@ -49,13 +50,16 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
   const d = parsed.data;
+  if (d.city === UB && !(DISTRICTS as readonly string[]).includes(d.district)) {
+    return { ok: false, error: "Дүүрэг сонгоно уу" };
+  }
   const id = String(form.get("id") ?? "");
 
   if (id) {
     // Засах — зөвхөн өөрийн рестораныг.
     const rows = await sql`
       update restaurants set
-        name = ${d.name}, district = ${d.district}, address = ${d.address}, phone = ${d.phone},
+        name = ${d.name}, city = ${d.city}, district = ${d.district}, address = ${d.address}, phone = ${d.phone},
         capacity = ${d.capacity}, description = ${d.description}, latitude = ${d.latitude}, longitude = ${d.longitude},
         has_host = ${d.has_host}, has_stage = ${d.has_stage}, has_screen = ${d.has_screen}, has_parking = ${d.has_parking}
       where id = ${id}::uuid and owner_id = ${userId}
@@ -67,15 +71,16 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
 
   // Шинэ ресторан — төлбөр төлөгдтөл нийтэд харагдахгүй (is_paid = false).
   const [created] = await sql<{ id: string }>`
-    insert into restaurants (owner_id, name, district, address, phone, capacity, description,
+    insert into restaurants (owner_id, name, city, district, address, phone, capacity, description,
       latitude, longitude, has_host, has_stage, has_screen, has_parking, is_paid)
-    values (${userId}, ${d.name}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
+    values (${userId}, ${d.name}, ${d.city}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
       ${d.latitude}, ${d.longitude}, ${d.has_host}, ${d.has_stage}, ${d.has_screen}, ${d.has_parking}, false)
     returning id`.catch(() => []);
   if (!created) return { ok: false, error: "Хадгалж чадсангүй" };
 
   revalidatePath("/dashboard", "layout");
-  redirect(`/dashboard/r/${created.id}/pay`);
+  // Клиент цэс/зургаа байршуулсны дараа төлбөрийн хуудас руу шилжинэ.
+  return { ok: true, id: created.id };
 }
 
 export async function setImages(restaurantId: string, images: string[]): Promise<ActionResult> {

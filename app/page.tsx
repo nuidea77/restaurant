@@ -5,7 +5,7 @@ import { RestaurantCard } from "@/components/restaurant-card";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Divider, Section } from "@/components/ui/frame";
-import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, DISTRICTS } from "@/lib/constants";
+import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { getSiteStats, searchRestaurants } from "@/lib/queries";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
@@ -24,7 +24,10 @@ function num(v: string | undefined) {
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
 
-  const district = (DISTRICTS as readonly string[]).includes(one(sp.district) ?? "") ? one(sp.district) : undefined;
+  const city = (CITIES as readonly string[]).includes(one(sp.city) ?? "") ? one(sp.city) : undefined;
+  // Дүүргээр зөвхөн Улаанбаатарт шүүнэ.
+  const district =
+    (!city || city === UB) && (DISTRICTS as readonly string[]).includes(one(sp.district) ?? "") ? one(sp.district) : undefined;
   const minPrice = num(one(sp.min));
   const maxPrice = num(one(sp.max));
   const capacity = CAPACITY_RANGES.find((c) => c.key === one(sp.capacity));
@@ -34,6 +37,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   let error = false;
   try {
     results = await searchRestaurants({
+      city: city ?? (district ? UB : undefined),
       district,
       minPrice,
       maxPrice,
@@ -50,6 +54,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   }
 
   const initial: FilterValues = {
+    city,
     district,
     minPrice: minPrice ?? BUDGET_MIN,
     maxPrice: maxPrice ?? BUDGET_MAX,

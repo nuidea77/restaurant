@@ -10,10 +10,11 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
-import { AMENITIES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, DISTRICTS } from "@/lib/constants";
+import { AMENITIES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
 
 export type FilterValues = {
+  city?: string;
   district?: string;
   minPrice: number;
   maxPrice: number;
@@ -30,8 +31,10 @@ export function Filters({ initial }: { initial: FilterValues }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [budget, setBudget] = useState<number[]>([initial.minPrice, initial.maxPrice]);
   const [pending, startTransition] = useTransition();
+  const [city, setCity] = useState(initial.city ?? "");
 
   const activeCount =
+    (initial.city ? 1 : 0) +
     (initial.district ? 1 : 0) +
     (initial.capacity ? 1 : 0) +
     initial.amenities.length +
@@ -68,16 +71,29 @@ export function Filters({ initial }: { initial: FilterValues }) {
         className="space-y-6 p-4"
       >
         <div className="space-y-2">
-          <Label htmlFor="district">Дүүрэг</Label>
-          <Select className="w-full" id="district" name="district" defaultValue={initial.district ?? ""}>
-            <option value="">Бүх дүүрэг</option>
-            {DISTRICTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
+          <Label htmlFor="city">Хот / аймаг</Label>
+          <Select className="w-full" id="city" name="city" value={city} onChange={(e) => setCity(e.target.value)}>
+            <option value="">Бүх хот, аймаг</option>
+            {CITIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
               </option>
             ))}
           </Select>
         </div>
+        {(city === "" || city === UB) && (
+          <div className="space-y-2">
+            <Label htmlFor="district">Дүүрэг</Label>
+            <Select className="w-full" id="district" name="district" defaultValue={initial.district ?? ""}>
+              <option value="">Бүх дүүрэг</option>
+              {DISTRICTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-baseline justify-between">

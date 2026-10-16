@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
-import { AMENITIES } from "@/lib/constants";
+import { AMENITIES, UB } from "@/lib/constants";
 import { getPackages, getRestaurant } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const from = packages[0] ? ` · 1 хүн ${formatMNT(packages[0].price_per_person)}-аас` : "";
   return {
     title: `${r.name} — Шинэ жилийн багц`,
-    description: `${r.district}, ${r.capacity} хүний багтаамжтай${from}`,
+    description: `${r.city}, ${r.district}, ${r.capacity} хүний багтаамжтай${from}`,
     openGraph: r.images[0] ? { images: [r.images[0]] } : undefined,
   };
 }
@@ -39,7 +39,7 @@ export default async function RestaurantPage({ params }: { params: Params }) {
   const { restaurant: r, packages } = data;
 
   const sourceFiles = [...new Set(packages.map((p) => p.file_url))];
-  const mapQuery = r.latitude != null && r.longitude != null ? `${r.latitude},${r.longitude}` : `${r.address}, ${r.district}, Улаанбаатар`;
+  const mapQuery = r.latitude != null && r.longitude != null ? `${r.latitude},${r.longitude}` : `${r.address}, ${r.district}, ${r.city}`;
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   const cheapest = packages[0]?.price_per_person;
@@ -62,7 +62,7 @@ export default async function RestaurantPage({ params }: { params: Params }) {
             <h1 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">{r.name}</h1>
             <div className="flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" /> {r.district}, {r.address}
+                <MapPin className="h-4 w-4" /> {r.city === UB ? "" : `${r.city}, `}{r.district}, {r.address}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Users className="h-4 w-4" /> {r.capacity} хүний багтаамж
@@ -142,6 +142,7 @@ export default async function RestaurantPage({ params }: { params: Params }) {
             <div>
               <p className="text-sm text-muted-foreground">Хаяг</p>
               <p>
+                {r.city === UB ? "" : `${r.city}, `}
                 {r.district}, {r.address}
               </p>
             </div>

@@ -2,6 +2,7 @@ export type Restaurant = {
   id: string;
   owner_id: string;
   name: string;
+  city: string;
   district: string;
   address: string;
   phone: string;
@@ -36,6 +37,7 @@ export type RestaurantSearchRow = Pick<
   Restaurant,
   | "id"
   | "name"
+  | "city"
   | "district"
   | "address"
   | "phone"
