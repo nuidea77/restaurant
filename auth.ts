@@ -13,6 +13,8 @@ declare module "next-auth" {
 const Credentials_ = z.object({ email: z.email(), password: z.string().min(8) });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Vercel болон `next start` дээр Host header-ийг итгэмжлэнэ (UntrustedHost алдаанаас сэргийлнэ).
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [

@@ -49,13 +49,11 @@
 2. Project → **Storage** таб:
    - **Create Database → Neon (Postgres)** → project-д холбоно. `DATABASE_URL` автоматаар нэмэгдэнэ.
    - **Create → Blob** → project-д холбоно. `BLOB_READ_WRITE_TOKEN` автоматаар нэмэгдэнэ.
-3. Project → Settings → **Environment Variables**: `AUTH_SECRET`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`,
-   `GOOGLE_SERVICE_ACCOUNT_KEY`, `GEMINI_MODEL` нэмнэ.
-4. Схем үүсгэх (нэг удаа): Neon-ы SQL Editor-т `db/schema.sql`-г ажиллуулах, эсвэл локалаас `npm run db:migrate`.
-5. Redeploy.
+3. Project → Settings → **Environment Variables**: `AUTH_SECRET`, `VERTEX_API_KEY` (эсвэл
+   `VERTEX_PROJECT` + `GOOGLE_SERVICE_ACCOUNT_KEY`), `GEMINI_MODEL` нэмнэ.
+4. Redeploy. Build бүрийн өмнө `db/schema.sql` автоматаар ажиллаж хүснэгтүүдийг үүсгэнэ (idempotent).
 
-**Google Cloud**: Vertex AI API идэвхжүүлж, `roles/aiplatform.user` эрхтэй service account үүсгээд JSON түлхүүрийг
-`GOOGLE_SERVICE_ACCOUNT_KEY`-д нэг мөрөөр оруулна.
+Орчны хувьсагч дутуу бол сайт 500 алдааны оронд аль хувьсагчийг нэмэхийг харуулна.
 
 ## Локал дээр ажиллуулах
 

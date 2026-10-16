@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SetupNotice } from "@/components/setup-notice";
 import { SiteHeader } from "@/components/site-header";
+import { missingRequiredEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Шинэ жилийн хүлээн авалт — Ресторан хайх",
@@ -8,6 +10,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const missing = missingRequiredEnv();
+  if (missing.length) {
+    return (
+      <html lang="mn">
+        <body className="min-h-screen antialiased">
+          <SetupNotice missing={missing} />
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="mn">
       <body className="min-h-screen antialiased">

@@ -37,18 +37,36 @@ const PROMPT = `Чи Монгол рестораны Шинэ жилийн хү�
 
 let client: GoogleGenAI | null = null;
 
+/**
+ * Vertex AI клиент. Нэвтрэх аргууд (эхнийх нь давуу):
+ * 1. Service account JSON — GOOGLE_SERVICE_ACCOUNT_KEY (Vercel-д тохиромжтой)
+ * 2. Service account файлын зам — VERTEX_CREDENTIALS (локал)
+ * 3. Vertex AI API түлхүүр (express mode) — VERTEX_API_KEY
+ * 4. Application Default Credentials (gcloud auth application-default login)
+ */
 function getClient() {
   if (client) return client;
-  const project = process.env.GOOGLE_CLOUD_PROJECT;
-  if (!project) throw new Error("GOOGLE_CLOUD_PROJECT тохируулаагүй байна");
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  client = new GoogleGenAI({
-    vertexai: true,
-    project,
-    location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1",
-    // Vercel дээр файл систем ашиглах боломжгүй тул JSON түлхүүрийг env-ээс уншина.
-    ...(key ? { googleAuthOptions: { credentials: JSON.parse(key) } } : {}),
-  });
+  const project = process.env.VERTEX_PROJECT || process.env.GOOGLE_CLOUD_PROJECT;
+  const location = process.env.VERTEX_LOCATION || process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+  const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const keyFile = process.env.VERTEX_CREDENTIALS;
+  const apiKey = process.env.VERTEX_API_KEY;
+
+  if (keyJson || keyFile) {
+    if (!project) throw new Error("VERTEX_PROJECT тохируулаагүй байна");
+    client = new GoogleGenAI({
+      vertexai: true,
+      project,
+      location,
+      googleAuthOptions: keyJson ? { credentials: JSON.parse(keyJson) } : { keyFilename: keyFile },
+    });
+  } else if (apiKey) {
+    // Express mode: API түлхүүр нь project/location-гүйгээр global endpoint ашиглана.
+    client = new GoogleGenAI({ vertexai: true, apiKey });
+  } else {
+    if (!project) throw new Error("VERTEX_PROJECT эсвэл VERTEX_API_KEY тохируулаагүй байна");
+    client = new GoogleGenAI({ vertexai: true, project, location });
+  }
   return client;
 }
 

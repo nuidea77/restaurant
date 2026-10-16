@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { buttonVariants } from "@/components/ui/button";
 
 export async function SiteHeader() {
-  const session = await auth();
+  // Auth тохиргоо дутуу үед ч толгой хэсэг бүх хуудсыг унагахгүй.
+  const session = await auth().catch(() => null);
   const user = session?.user;
 
   return (
