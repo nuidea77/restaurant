@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUserId } from "@/auth";
 import { sql } from "@/lib/db";
-import { getRestaurantByOwner } from "@/lib/queries";
+import { getOwnedRestaurant } from "@/lib/queries";
 import { readOwnUpload } from "@/lib/storage";
 import { extractMenuPackages } from "@/lib/vertex";
 
 // Олон хуудастай PDF-ийг Gemini уншихад хугацаа шаардана.
 export const maxDuration = 60;
 
-const Body = z.object({ url: z.string().min(1) });
+const Body = z.object({ url: z.string().min(1), restaurantId: z.string().min(1) });
 
 export async function POST(request: Request) {
   const userId = await currentUserId();
@@ -17,10 +17,10 @@ export async function POST(request: Request) {
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Буруу хүсэлт" }, { status: 400 });
-  const { url } = parsed.data;
+  const { url, restaurantId } = parsed.data;
 
-  const restaurant = await getRestaurantByOwner(userId);
-  if (!restaurant) return NextResponse.json({ error: "Эхлээд рестораны профайлаа үүсгэнэ үү" }, { status: 400 });
+  const restaurant = await getOwnedRestaurant(restaurantId, userId);
+  if (!restaurant) return NextResponse.json({ error: "Ресторан олдсонгүй" }, { status: 404 });
 
   const file = await readOwnUpload(url, "menus", userId).catch(() => null);
   if (!file) return NextResponse.json({ error: "Файл олдсонгүй" }, { status: 404 });

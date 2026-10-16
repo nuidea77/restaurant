@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { DISTRICTS } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
 import { currentUserId } from "@/auth";
 import { sql } from "@/lib/db";
+import { confirmPayment } from "@/lib/payments";
 import { isOwnUploadUrl } from "@/lib/upload-path";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -45,34 +47,45 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
   const d = parsed.data;
-  try {
-    await sql`
-      insert into restaurants (owner_id, name, district, address, phone, capacity, description,
-        latitude, longitude, has_host, has_stage, has_screen, has_parking)
-      values (${userId}, ${d.name}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
-        ${d.latitude}, ${d.longitude}, ${d.has_host}, ${d.has_stage}, ${d.has_screen}, ${d.has_parking})
-      on conflict (owner_id) do update set
-        name = excluded.name, district = excluded.district, address = excluded.address, phone = excluded.phone,
-        capacity = excluded.capacity, description = excluded.description, latitude = excluded.latitude,
-        longitude = excluded.longitude, has_host = excluded.has_host, has_stage = excluded.has_stage,
-        has_screen = excluded.has_screen, has_parking = excluded.has_parking`;
-  } catch {
-    return { ok: false, error: "Хадгалж чадсангүй" };
+  const id = String(form.get("id") ?? "");
+
+  if (id) {
+    // Засах — зөвхөн өөрийн рестораныг.
+    const rows = await sql`
+      update restaurants set
+        name = ${d.name}, district = ${d.district}, address = ${d.address}, phone = ${d.phone},
+        capacity = ${d.capacity}, description = ${d.description}, latitude = ${d.latitude}, longitude = ${d.longitude},
+        has_host = ${d.has_host}, has_stage = ${d.has_stage}, has_screen = ${d.has_screen}, has_parking = ${d.has_parking}
+      where id = ${id}::uuid and owner_id = ${userId}
+      returning id`.catch(() => []);
+    if (rows.length === 0) return { ok: false, error: "Хадгалж чадсангүй" };
+    revalidatePath("/dashboard", "layout");
+    return { ok: true };
   }
 
-  revalidatePath("/dashboard");
-  return { ok: true };
+  // Шинэ ресторан — төлбөр төлөгдтөл нийтэд харагдахгүй (is_paid = false).
+  const [created] = await sql<{ id: string }>`
+    insert into restaurants (owner_id, name, district, address, phone, capacity, description,
+      latitude, longitude, has_host, has_stage, has_screen, has_parking, is_paid)
+    values (${userId}, ${d.name}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
+      ${d.latitude}, ${d.longitude}, ${d.has_host}, ${d.has_stage}, ${d.has_screen}, ${d.has_parking}, false)
+    returning id`.catch(() => []);
+  if (!created) return { ok: false, error: "Хадгалж чадсангүй" };
+
+  revalidatePath("/dashboard", "layout");
+  redirect(`/dashboard/r/${created.id}/pay`);
 }
 
-export async function setImages(images: string[]): Promise<ActionResult> {
+export async function setImages(restaurantId: string, images: string[]): Promise<ActionResult> {
   const userId = await requireUser();
   // /demo/ — seed скриптийн демо зургууд.
   const allowed = (url: string) => isOwnUploadUrl(url, "images", userId) || /^\/demo\/[\w-]+\.svg$/.test(url);
   if (!images.every(allowed)) return { ok: false, error: "Буруу зургийн холбоос" };
 
-  const rows = await sql`update restaurants set images = ${images} where owner_id = ${userId} returning id`;
+  const rows = await sql`
+    update restaurants set images = ${images} where id = ${restaurantId}::uuid and owner_id = ${userId} returning id`;
   if (rows.length === 0) return { ok: false, error: "Зураг хадгалж чадсангүй" };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 
@@ -99,7 +112,7 @@ export async function updatePackage(id: string, input: unknown, verify: boolean)
     returning id`;
   if (rows.length === 0) return { ok: false, error: "Хадгалж чадсангүй" };
 
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
 
@@ -110,6 +123,15 @@ export async function deletePackage(id: string): Promise<ActionResult> {
     where id = ${id}::uuid and restaurant_id in (select id from restaurants where owner_id = ${userId})
     returning id`;
   if (rows.length === 0) return { ok: false, error: "Устгаж чадсангүй" };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { ok: true };
+}
+
+/** Туршилтын (demo) төлбөр: нэхэмжлэхийг төлөгдсөн болгож рестораныг нийтэд нээнэ. */
+export async function payListing(paymentId: string, restaurantId: string): Promise<ActionResult> {
+  const userId = await requireUser();
+  const paidRestaurant = await confirmPayment(paymentId, userId);
+  if (!paidRestaurant) return { ok: false, error: "Төлбөр баталгаажуулж чадсангүй" };
+  revalidatePath("/", "layout");
+  redirect(`/dashboard/r/${restaurantId}?paid=1`);
 }

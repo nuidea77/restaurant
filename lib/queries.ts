@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "@/lib/db";
-import type { MenuPackage, Restaurant, RestaurantSearchRow } from "@/lib/types";
+import type { MenuPackage, OwnerRestaurant, Restaurant, RestaurantSearchRow } from "@/lib/types";
 
 
 export type SearchFilters = {
@@ -29,7 +29,8 @@ export function searchRestaurants(f: SearchFilters) {
      and p.is_verified
      and (${f.minPrice ?? null}::numeric is null or p.price_per_person >= ${f.minPrice ?? null}::numeric)
      and (${f.maxPrice ?? null}::numeric is null or p.price_per_person <= ${f.maxPrice ?? null}::numeric)
-    where (${f.district ?? null}::text is null or r.district = ${f.district ?? null}::text)
+    where r.is_paid
+      and (${f.district ?? null}::text is null or r.district = ${f.district ?? null}::text)
       and (${f.minCapacity ?? null}::int is null or r.capacity >= ${f.minCapacity ?? null}::int)
       and (${f.maxCapacity ?? null}::int is null or r.capacity <= ${f.maxCapacity ?? null}::int)
       and (${!!f.hasHost} = false or r.has_host)
@@ -40,14 +41,29 @@ export function searchRestaurants(f: SearchFilters) {
     order by min(p.price_per_person) asc`;
 }
 
+/** Нийтийн хуудас — зөвхөн төлбөр төлөгдсөн ресторан. */
 export async function getRestaurant(id: string) {
-  const [r] = await sql<Restaurant>`select * from restaurants where id = ${id}`;
+  const [r] = await sql<Restaurant>`select * from restaurants where id = ${id} and is_paid`;
   return r ?? null;
 }
 
-export async function getRestaurantByOwner(ownerId: string) {
-  const [r] = await sql<Restaurant>`select * from restaurants where owner_id = ${ownerId}`;
+/** Эзэмшигчийн өөрийн ресторан (төлбөрийн төлөвөөс үл хамааран). */
+export async function getOwnedRestaurant(id: string, ownerId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [r] = await sql<Restaurant>`select * from restaurants where id = ${id} and owner_id = ${ownerId}`;
   return r ?? null;
+}
+
+export function getOwnerRestaurants(ownerId: string) {
+  return sql<OwnerRestaurant>`
+    select r.*,
+           count(p.id)::int as package_count,
+           count(p.id) filter (where not p.is_verified)::int as pending_count
+    from restaurants r
+    left join menu_packages p on p.restaurant_id = r.id
+    where r.owner_id = ${ownerId}
+    group by r.id
+    order by r.created_at desc`;
 }
 
 /** verifiedOnly=false нь зөвхөн эзэмшигчийн самбарт. */
@@ -68,6 +84,7 @@ export async function getSiteStats() {
            count(distinct r.district)::int as districts,
            min(p.price_per_person)::float8 as min_price
     from restaurants r
-    join menu_packages p on p.restaurant_id = r.id and p.is_verified`;
+    join menu_packages p on p.restaurant_id = r.id and p.is_verified
+    where r.is_paid`;
   return row;
 }

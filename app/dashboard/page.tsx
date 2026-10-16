@@ -1,27 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ImageManager } from "@/components/dashboard/image-manager";
-import { MenuUploader } from "@/components/dashboard/menu-uploader";
-import { PackageReview } from "@/components/dashboard/package-review";
-import { ProfileForm } from "@/components/dashboard/profile-form";
-import { ArrowUpRight, Images, Sparkles, Store } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { Card, CardBar } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Divider, Section } from "@/components/ui/frame";
+import { ArrowUpRight, CreditCard, Plus, Store, Users } from "lucide-react";
 import { currentUserId } from "@/auth";
-import { getPackages, getRestaurantByOwner } from "@/lib/queries";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Divider, Section } from "@/components/ui/frame";
+import { LISTING_FEE } from "@/lib/constants";
+import { getOwnerRestaurants } from "@/lib/queries";
+import { formatMNT } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const userId = await currentUserId();
   if (!userId) redirect("/login");
 
-  const restaurant = await getRestaurantByOwner(userId);
-  const packages = restaurant ? await getPackages(restaurant.id, false) : [];
-
-  const pendingCount = packages.filter((p) => !p.is_verified).length;
-
-  const verifiedCount = packages.length - pendingCount;
+  const restaurants = await getOwnerRestaurants(userId);
+  const activeCount = restaurants.filter((r) => r.is_paid).length;
 
   return (
     <>
@@ -29,100 +23,102 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Эзэмшигчийн самбар</p>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">
-              {restaurant ? restaurant.name : "Рестораны удирдлага"}
-            </h1>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Миний ресторанууд</h1>
+            <p className="mt-2 text-muted-foreground">
+              Хэдэн ч ресторан нэмж болно. Ресторан бүрийг нийтлэх төлбөр — {formatMNT(LISTING_FEE)}.
+            </p>
           </div>
-          {restaurant && (
-            <Link href={`/restaurants/${restaurant.id}`} className={buttonVariants({ variant: "outline" })}>
-              Нийтийн хуудас <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          )}
+          <Link href="/dashboard/new" className={buttonVariants({ size: "lg" })}>
+            <Plus className="h-4 w-4" /> Ресторан нэмэх
+          </Link>
         </div>
-        {restaurant && (
+        {restaurants.length > 0 && (
           <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-xl">
-            <Stat label="Нийтлэгдсэн" value={verifiedCount} />
-            <Stat label="Шалгах" value={pendingCount} highlight={pendingCount > 0} />
-            <Stat label="Зураг" value={restaurant.images?.length ?? 0} />
+            <Stat label="Нийт" value={restaurants.length} />
+            <Stat label="Идэвхтэй" value={activeCount} />
+            <Stat label="Төлбөр хүлээгдэж буй" value={restaurants.length - activeCount} />
           </div>
         )}
       </Section>
 
       <Divider />
 
-      <Section className="space-y-6">
-        <Card className="overflow-hidden">
-          <CardBar icon={<Store />} title="Профайл" />
-          <div className="p-5">
-            <ProfileForm restaurant={restaurant} />
-          </div>
-        </Card>
-
-        {restaurant && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="overflow-hidden">
-              <CardBar icon={<Images />} title="Заал болон хоолны зураг" count={restaurant.images?.length ?? 0} />
-              <div className="p-5">
-                <ImageManager images={restaurant.images ?? []} />
+      <Section>
+        {restaurants.length === 0 ? (
+          <Empty className="rounded-xl border border-dashed bg-card py-14">
+            <EmptyHeader className="mb-4">
+              <EmptyMedia variant="icon">
+                <Store />
+              </EmptyMedia>
+              <EmptyTitle>Одоогоор ресторан алга</EmptyTitle>
+              <EmptyDescription>
+                Эхний рестораныхаа мэдээллийг оруулаад {formatMNT(LISTING_FEE)} төлөхөд нийтэд харагдана.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Link href="/dashboard/new" className={buttonVariants({})}>
+                <Plus className="h-4 w-4" /> Ресторан нэмэх
+              </Link>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {restaurants.map((r) => (
+              <div key={r.id} className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+                <div className="flex items-center gap-2 border-b px-4 py-3 text-sm font-medium">
+                  <Store className="h-4 w-4 text-muted-foreground" />
+                  <span className="flex-1 truncate">{r.district}</span>
+                  {r.is_paid ? (
+                    <Badge className="border-green-200 bg-green-50 text-green-700">Идэвхтэй</Badge>
+                  ) : (
+                    <Badge className="border-amber-200 bg-amber-50 text-amber-800">Төлбөр хүлээгдэж буй</Badge>
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col gap-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                      {r.images?.[0] && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.images[0]} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold tracking-tight">{r.name}</h3>
+                      <p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" /> {r.capacity} · {r.package_count} багц
+                        {r.pending_count > 0 && <span className="text-amber-700"> · {r.pending_count} шалгах</span>}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <Link href={`/dashboard/r/${r.id}`} className={buttonVariants({ variant: "outline", className: "flex-1" })}>
+                      Удирдах
+                    </Link>
+                    {r.is_paid ? (
+                      <Link href={`/restaurants/${r.id}`} className={buttonVariants({ variant: "ghost" })} aria-label="Нийтийн хуудас">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link href={`/dashboard/r/${r.id}/pay`} className={buttonVariants({ className: "flex-1" })}>
+                        <CreditCard className="h-4 w-4" /> Төлөх
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
-            </Card>
-            <Card className="overflow-hidden">
-              <CardBar icon={<Sparkles />} title="Шинэ жилийн цэс (AI)" />
-              <div className="space-y-4 p-5">
-                <p className="text-sm text-muted-foreground">
-                  Цэсээ байршуулахад AI багц бүрийн нэр, үнэ, хүний тоо, 1 хүний үнийг гаргана. Та шалгаж
-                  &quot;Баталгаажуулах&quot; дарсны дараа л нийтэд харагдана.
-                </p>
-                <MenuUploader />
-              </div>
-            </Card>
+            ))}
           </div>
         )}
       </Section>
-
-      {restaurant && (
-        <>
-          <Divider />
-          <Section>
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">Багцууд</h2>
-                <p className="mt-1 text-muted-foreground">AI-ийн гаргасан багцыг шалгаж, засаж, баталгаажуулна.</p>
-              </div>
-              {pendingCount > 0 && (
-                <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
-                  {pendingCount} багц шалгах шаардлагатай
-                </span>
-              )}
-            </div>
-            {!packages.length && (
-              <Empty className="rounded-xl border border-dashed bg-card py-12">
-                <EmptyHeader className="mb-0">
-                  <EmptyMedia variant="icon">
-                    <Sparkles />
-                  </EmptyMedia>
-                  <EmptyTitle>Одоогоор багц алга</EmptyTitle>
-                  <EmptyDescription>Дээрээс цэсээ байршуулахад AI багцуудыг энд гаргана.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-            <div className="grid gap-4 md:grid-cols-2">
-              {packages.map((p) => (
-                <PackageReview key={`${p.id}-${p.is_verified}-${p.total_price}`} pkg={p} />
-              ))}
-            </div>
-          </Section>
-        </>
-      )}
     </>
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl border bg-card px-4 py-3 shadow-sm">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-2xl font-bold tabular-nums tracking-tight ${highlight ? "text-amber-600" : ""}`}>{value}</p>
+      <p className="truncate text-xs text-muted-foreground">{label}</p>
+      <p className="text-2xl font-bold tabular-nums tracking-tight">{value}</p>
     </div>
   );
 }

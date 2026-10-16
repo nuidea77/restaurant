@@ -27,7 +27,7 @@ export async function SiteHeader() {
           {user ? (
             <>
               <Link href="/dashboard" className={buttonVariants({ variant: "dark", size: "sm" })}>
-                Миний ресторан
+                Миний ресторанууд
               </Link>
               <form action={logout}>
                 <button className={buttonVariants({ variant: "outline", size: "sm" })}>Гарах</button>
@@ -38,7 +38,7 @@ export async function SiteHeader() {
               <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>
                 Нэвтрэх
               </Link>
-              <Link href="/login" className={buttonVariants({ variant: "dark", size: "sm", className: "hidden sm:inline-flex" })}>
+              <Link href="/dashboard/new" className={buttonVariants({ variant: "dark", size: "sm", className: "hidden sm:inline-flex" })}>
                 Ресторан нэмэх
               </Link>
             </>

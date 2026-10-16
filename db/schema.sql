@@ -64,3 +64,30 @@ drop trigger if exists trg_menu_packages_price on menu_packages;
 create trigger trg_menu_packages_price
 before insert or update of total_price, person_count, price_per_person on menu_packages
 for each row execute function compute_price_per_person();
+
+-- ---------------------------------------------------------------------------
+-- Олон ресторан + нийтлэлийн төлбөр (ресторан бүр 50,000₮)
+-- ---------------------------------------------------------------------------
+-- Нэг эзэмшигч олон ресторантай байж болно.
+alter table restaurants drop constraint if exists restaurants_owner_id_key;
+create index if not exists idx_restaurant_owner on restaurants(owner_id);
+
+-- Энэ өөрчлөлтөөс өмнө үүссэн ресторанууд (default true-гээр бөглөгдөнө) идэвхтэй хэвээр үлдэнэ;
+-- шинээр нэмэгдсэн ресторан төлбөр төлөгдтөл нийтэд харагдахгүй.
+alter table restaurants add column if not exists is_paid boolean not null default true;
+alter table restaurants alter column is_paid set default false;
+alter table restaurants add column if not exists paid_at timestamp with time zone;
+create index if not exists idx_restaurant_paid on restaurants(is_paid);
+
+create table if not exists payments (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  owner_id uuid not null references users(id) on delete cascade,
+  amount numeric not null check (amount > 0),
+  status varchar(20) not null default 'pending' check (status in ('pending', 'paid', 'cancelled')),
+  provider varchar(50) not null default 'demo',
+  reference varchar(32) not null unique,
+  created_at timestamp with time zone default now(),
+  paid_at timestamp with time zone
+);
+create index if not exists idx_payments_restaurant on payments(restaurant_id, status);

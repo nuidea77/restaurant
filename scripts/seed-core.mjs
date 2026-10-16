@@ -14,9 +14,9 @@ export async function seedDemo(db, log = () => {}) {
     const images = [`/demo/r${n}-1.svg`, `/demo/r${n}-2.svg`];
     const [{ id: restaurantId }] = (await db.sql`
       insert into restaurants (owner_id, name, district, address, phone, capacity, description,
-        has_host, has_stage, has_screen, has_parking, latitude, longitude, images)
+        has_host, has_stage, has_screen, has_parking, latitude, longitude, images, is_paid, paid_at)
       values (${userId}, ${r.name}, ${r.district}, ${r.address}, ${r.phone}, ${r.capacity}, ${r.description},
-        ${r.host}, ${r.stage}, ${r.screen}, ${r.parking}, ${r.lat}, ${r.lng}, ${images})
+        ${r.host}, ${r.stage}, ${r.screen}, ${r.parking}, ${r.lat}, ${r.lng}, ${images}, true, now())
       returning id`).rows;
 
     for (const p of r.packages) {

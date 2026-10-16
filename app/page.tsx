@@ -93,7 +93,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           <a href="#results" className={buttonVariants({ variant: "dark", size: "lg" })}>
             Ресторан хайх
           </a>
-          <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          <Link href="/dashboard/new" className={buttonVariants({ variant: "outline", size: "lg" })}>
             Ресторанаа нэмэх <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -177,6 +177,6 @@ const HOW_STEPS = [
   {
     icon: <BadgeCheck />,
     title: "Баталгаажсаны дараа нийтлэгдэнэ",
-    text: "Менежер шалгаж засаад баталгаажуулна. Та бодит үнээр нь харьцуулж сонгоно.",
+    text: "Менежер шалгаж засаад баталгаажуулна. Ресторан бүрийг нийтлэх төлбөр 50,000₮.",
   },
 ];

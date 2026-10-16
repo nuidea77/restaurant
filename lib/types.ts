@@ -14,6 +14,8 @@ export type Restaurant = {
   latitude: number | null;
   longitude: number | null;
   images: string[];
+  is_paid: boolean;
+  paid_at: string | null;
   created_at: string;
 };
 
@@ -44,3 +46,17 @@ export type RestaurantSearchRow = Pick<
   | "has_parking"
   | "images"
 > & { min_price: number; max_price: number; package_count: number };
+
+export type OwnerRestaurant = Restaurant & { package_count: number; pending_count: number };
+
+export type Payment = {
+  id: string;
+  restaurant_id: string;
+  owner_id: string;
+  amount: number;
+  status: "pending" | "paid" | "cancelled";
+  provider: string;
+  reference: string;
+  created_at: string;
+  paid_at: string | null;
+};

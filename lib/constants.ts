@@ -40,3 +40,6 @@ export const UPLOAD_FOLDERS = {
 } as const;
 
 export type UploadFolder = keyof typeof UPLOAD_FOLDERS;
+
+/** Нэг рестораныг нийтлэх төлбөр (₮). */
+export const LISTING_FEE = 50_000;

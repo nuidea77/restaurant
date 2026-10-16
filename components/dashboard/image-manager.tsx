@@ -7,14 +7,14 @@ import { IMAGE_MIME_TYPES } from "@/lib/constants";
 import { directUpload } from "@/lib/upload";
 import { buttonVariants } from "@/components/ui/button-variants";
 
-export function ImageManager({ images }: { images: string[] }) {
+export function ImageManager({ restaurantId, images }: { restaurantId: string; images: string[] }) {
   const [list, setList] = useState(images);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
   async function persist(next: string[]) {
-    const res = await setImages(next);
+    const res = await setImages(restaurantId, next);
     if (!res.ok) return setError(res.error);
     setList(next);
   }

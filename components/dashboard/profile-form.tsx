@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { AMENITIES, DISTRICTS } from "@/lib/constants";
+import { AMENITIES, DISTRICTS, LISTING_FEE } from "@/lib/constants";
+import { formatMNT } from "@/lib/utils";
 import type { Restaurant } from "@/lib/types";
 
 export function ProfileForm({ restaurant }: { restaurant: Restaurant | null }) {
@@ -16,6 +17,7 @@ export function ProfileForm({ restaurant }: { restaurant: Restaurant | null }) {
 
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
+      {r && <input type="hidden" name="id" value={r.id} />}
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="name">Рестораны нэр</Label>
         <Input id="name" name="name" defaultValue={r?.name} required />
@@ -66,7 +68,7 @@ export function ProfileForm({ restaurant }: { restaurant: Restaurant | null }) {
       </fieldset>
       <div className="flex items-center gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending}>
-          {pending ? "Хадгалж байна..." : r ? "Хадгалах" : "Ресторан үүсгэх"}
+          {pending ? "Хадгалж байна..." : r ? "Хадгалах" : `Үргэлжлүүлэх — төлбөр ${formatMNT(LISTING_FEE)}`}
         </Button>
         {state && <span className={state.ok ? "text-sm text-green-700" : "text-sm text-destructive"}>{state.ok ? "Хадгалагдлаа" : state.error}</span>}
       </div>
