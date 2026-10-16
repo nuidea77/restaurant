@@ -6,12 +6,23 @@ import { PayButton } from "@/components/dashboard/pay-button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
-import { getOrCreatePendingPayment, getPaidPayment, PAYMENT_PROVIDER } from "@/lib/payments";
+import { getOrCreatePendingPayment, getPaidPayment, paymentProvider } from "@/lib/payments";
 import { getOwnedRestaurant } from "@/lib/queries";
 import { LISTING_FEE } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
 
-export default async function PayPage({ params }: { params: Promise<{ id: string }> }) {
+const STATUS_MESSAGES: Record<string, string> = {
+  open: "Төлбөр хараахан төлөгдөөгүй байна.",
+  pending: "Таны шилжүүлгийг рестораны данс эзэмшигч шалгаж байна. Баталгаажмагц автоматаар идэвхжинэ.",
+  expired: "Төлбөрийн хуудасны хугацаа дууссан. Дахин төлнө үү.",
+  error: "Byl-ээс төлөв шалгаж чадсангүй. Түр хүлээгээд дахин шалгана уу.",
+};
+
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ status?: string }> };
+
+export default async function PayPage({ params, searchParams }: Props) {
+  const statusMessage = STATUS_MESSAGES[(await searchParams).status ?? ""];
+  const provider = paymentProvider();
   const userId = await currentUserId();
   if (!userId) redirect("/login");
   const restaurant = await getOwnedRestaurant((await params).id, userId);
@@ -60,13 +71,29 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
               ) : (
                 payment && (
                   <div className="space-y-3">
-                    {PAYMENT_PROVIDER === "demo" && (
-                      <p className="flex gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-                        <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                        Туршилтын горим: жинхэнэ мөнгө татагдахгүй. Товч дарахад төлбөр төлөгдсөнд тооцогдоно.
+                    {statusMessage && (
+                      <p className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                        <Info className="mt-0.5 h-4 w-4 shrink-0" /> {statusMessage}
                       </p>
                     )}
-                    <PayButton paymentId={payment.id} restaurantId={restaurant.id} amount={payment.amount} />
+                    {provider === "byl" ? (
+                      <p className="text-sm text-muted-foreground">
+                        Byl.mn-ийн аюулгүй хуудсанд QPay, банкны апп, SocialPay зэргээр төлнө. Төлсний дараа энд автоматаар
+                        буцаж ирнэ.
+                      </p>
+                    ) : (
+                      <p className="flex gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                        <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                        Туршилтын горим (BYL_TOKEN тохируулаагүй): жинхэнэ мөнгө татагдахгүй. Товч дарахад төлбөр
+                        төлөгдсөнд тооцогдоно.
+                      </p>
+                    )}
+                    <PayButton provider={provider} paymentId={payment.id} restaurantId={restaurant.id} amount={payment.amount} />
+                    {provider === "byl" && payment.byl_checkout_id != null && (
+                      <Link href={`/api/byl/return?payment=${payment.id}`} className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                        Төлсөн бол — төлбөр шалгах
+                      </Link>
+                    )}
                   </div>
                 )
               )}

@@ -7,7 +7,8 @@ import { DISTRICTS } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
 import { currentUserId } from "@/auth";
 import { sql } from "@/lib/db";
-import { confirmPayment } from "@/lib/payments";
+import { appOrigin } from "@/lib/origin";
+import { confirmDemoPayment, startBylCheckout } from "@/lib/payments";
 import { isOwnUploadUrl } from "@/lib/upload-path";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -130,8 +131,21 @@ export async function deletePackage(id: string): Promise<ActionResult> {
 /** Туршилтын (demo) төлбөр: нэхэмжлэхийг төлөгдсөн болгож рестораныг нийтэд нээнэ. */
 export async function payListing(paymentId: string, restaurantId: string): Promise<ActionResult> {
   const userId = await requireUser();
-  const paidRestaurant = await confirmPayment(paymentId, userId);
+  const paidRestaurant = await confirmDemoPayment(paymentId, userId);
   if (!paidRestaurant) return { ok: false, error: "Төлбөр баталгаажуулж чадсангүй" };
   revalidatePath("/", "layout");
   redirect(`/dashboard/r/${restaurantId}?paid=1`);
+}
+
+/** Byl.mn checkout үүсгээд хэрэглэгчийг Byl-ийн төлбөрийн хуудас руу шилжүүлнэ. */
+export async function payWithByl(paymentId: string): Promise<ActionResult> {
+  const userId = await requireUser();
+  let url: string;
+  try {
+    url = await startBylCheckout(paymentId, userId, await appOrigin());
+  } catch (err) {
+    console.error("Byl checkout failed", err);
+    return { ok: false, error: "Byl-тэй холбогдож чадсангүй. Түр хүлээгээд дахин оролдоно уу." };
+  }
+  redirect(url);
 }

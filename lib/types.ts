@@ -59,4 +59,6 @@ export type Payment = {
   reference: string;
   created_at: string;
   paid_at: string | null;
+  byl_checkout_id?: number | null;
+  byl_checkout_url?: string | null;
 };

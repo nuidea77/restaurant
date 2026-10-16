@@ -91,3 +91,8 @@ create table if not exists payments (
   paid_at timestamp with time zone
 );
 create index if not exists idx_payments_restaurant on payments(restaurant_id, status);
+
+-- Byl.mn checkout (https://byl.mn/docs/en/api/checkouts.html)
+alter table payments add column if not exists byl_checkout_id bigint;
+alter table payments add column if not exists byl_checkout_url text;
+create unique index if not exists idx_payments_byl_checkout on payments(byl_checkout_id) where byl_checkout_id is not null;
