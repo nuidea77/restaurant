@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" font-family="Arial, sans-serif">
+<rect width="1200" height="500" fill="#fffaf0"/><rect x="20" y="20" width="1160" height="460" fill="none" stroke="#38bdf8" stroke-width="6" rx="20"/>
+<text x="600" y="110" font-size="52" font-weight="700" text-anchor="middle" fill="#1e3a8a">Хөх Тэнгэр Ресторан — Шинэ жилийн цэс</text>
+<text x="80" y="200" font-size="38" font-weight="700" fill="#1e3a8a">Стандарт — 95,000₮ (1 хүний)</text>
+<text x="100" y="250" font-size="28" fill="#333">Цезарь салат, Тахианы шарсан мах, Бялуу, Ундаа</text>
+<text x="80" y="330" font-size="38" font-weight="700" fill="#1e3a8a">Премиум — 130,000₮ (1 хүний)</text>
+<text x="100" y="380" font-size="28" fill="#333">Хүйтэн зууш, Үхрийн стейк, Вино 1 хундага, Бялуу</text>
+</svg>

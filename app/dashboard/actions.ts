@@ -66,7 +66,9 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
 
 export async function setImages(images: string[]): Promise<ActionResult> {
   const userId = await requireUser();
-  if (!images.every((url) => isOwnUploadUrl(url, "images", userId))) return { ok: false, error: "Буруу зургийн холбоос" };
+  // /demo/ — seed скриптийн демо зургууд.
+  const allowed = (url: string) => isOwnUploadUrl(url, "images", userId) || /^\/demo\/[\w-]+\.svg$/.test(url);
+  if (!images.every(allowed)) return { ok: false, error: "Буруу зургийн холбоос" };
 
   const rows = await sql`update restaurants set images = ${images} where owner_id = ${userId} returning id`;
   if (rows.length === 0) return { ok: false, error: "Зураг хадгалж чадсангүй" };
