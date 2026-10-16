@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, FileText, ImagePlus, Loader2, Upload, X, XCircle } from "lucide-react";
+import { Check, CheckCircle2, FileText, ImagePlus, Loader2, Upload, X, XCircle } from "lucide-react";
 import { saveProfile, setImages } from "@/app/dashboard/actions";
 import { MapPicker } from "@/components/map-picker";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { AMENITIES, CITIES, DISTRICTS, IMAGE_MIME_TYPES, LISTING_FEE, MAX_UPLOAD
 import type { Restaurant } from "@/lib/types";
 import { directUpload } from "@/lib/upload";
 import { formatMNT } from "@/lib/utils";
+import { AmenityIcon } from "@/components/amenity-icon";
 
 type Step = { label: string; state: "waiting" | "running" | "done" | "error"; note?: string };
 
@@ -164,12 +165,28 @@ export function ProfileForm({ restaurant, userId }: { restaurant: Restaurant | n
         <Label htmlFor="description">Тайлбар</Label>
         <Textarea id="description" name="description" defaultValue={r?.description ?? ""} />
       </div>
-      <fieldset className="flex flex-wrap gap-4 sm:col-span-2">
-        {AMENITIES.map((a) => (
-          <label key={a.key} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name={a.key} defaultChecked={r?.[a.key] ?? false} /> {a.label}
-          </label>
-        ))}
+      <fieldset className="space-y-2 sm:col-span-2">
+        <legend className="mb-2 text-sm font-medium">Үйлчилгээний нөхцөл</legend>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {AMENITIES.map((a) => (
+            <label
+              key={a.key}
+              className="group relative flex cursor-pointer select-none items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-accent has-[:checked]:border-primary has-[:checked]:bg-brand-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+            >
+              <input type="checkbox" name={a.key} defaultChecked={r?.[a.key] ?? false} className="sr-only" />
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-muted text-foreground/70 transition-colors group-has-[:checked]:bg-primary group-has-[:checked]:text-white">
+                <AmenityIcon amenity={a.key} className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium group-has-[:checked]:text-primary">{a.label}</span>
+                <span className="block text-xs text-muted-foreground">{a.hint}</span>
+              </span>
+              <span className="ml-auto grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors group-has-[:checked]:border-primary group-has-[:checked]:bg-primary">
+                <Check className="h-3 w-3 text-white opacity-0 group-has-[:checked]:opacity-100" />
+              </span>
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       {!r && (

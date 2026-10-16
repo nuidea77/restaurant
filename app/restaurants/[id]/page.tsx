@@ -9,6 +9,7 @@ import { Divider, Section } from "@/components/ui/frame";
 import { AMENITIES, UB } from "@/lib/constants";
 import { getPackages, getRestaurant } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
+import { AmenityIcon } from "@/components/amenity-icon";
 
 type Params = Promise<{ id: string }>;
 
@@ -78,7 +79,7 @@ export default async function RestaurantPage({ params }: { params: Params }) {
                       r.images[0] ? "bg-white/15 text-white" : "border bg-card"
                     }`}
                   >
-                    <Check className="h-3 w-3" /> {a.label}
+                    <AmenityIcon amenity={a.key} className="h-3.5 w-3.5" /> {a.label}
                   </span>
                 ))}
               </div>
@@ -108,12 +109,34 @@ export default async function RestaurantPage({ params }: { params: Params }) {
         </div>
       </section>
 
-      {(r.description || r.images.length > 1) && (
-        <Section className="space-y-6">
-          {r.description && <p className="max-w-3xl whitespace-pre-line text-lg text-foreground/80">{r.description}</p>}
-          {r.images.length > 1 && <Gallery images={r.images} name={r.name} />}
-        </Section>
-      )}
+      <Section className="space-y-6">
+        {r.description && <p className="max-w-3xl whitespace-pre-line text-lg text-foreground/80">{r.description}</p>}
+        {/* Үйлчилгээний нөхцөл — байгаа/байхгүйг хоёуланг нь харуулна */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {AMENITIES.map((a) => {
+            const has = r[a.key];
+            return (
+              <div
+                key={a.key}
+                className={`flex items-center gap-3 rounded-xl border p-3 ${has ? "border-primary/30 bg-brand-soft" : "bg-card opacity-60"}`}
+              >
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${has ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}
+                >
+                  <AmenityIcon amenity={a.key} className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-sm font-semibold ${has ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                    {a.short}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{has ? a.hint : "Байхгүй"}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {r.images.length > 1 && <Gallery images={r.images} name={r.name} />}
+      </Section>
 
       <Divider />
 

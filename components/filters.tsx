@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
 import { AMENITIES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
+import { AmenityIcon } from "@/components/amenity-icon";
 
 export type FilterValues = {
   city?: string;
@@ -158,11 +159,18 @@ export function Filters({ initial }: { initial: FilterValues }) {
 
         <fieldset className="space-y-2">
           <legend className="mb-2 text-sm font-medium">Үйлчилгээний нөхцөл</legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {AMENITIES.map((a) => (
-              <label key={a.key} className={chip}>
-                <input type="checkbox" name={a.key} value="1" defaultChecked={initial.amenities.includes(a.key)} className="sr-only" />
-                {a.label}
+              <label
+                key={a.key}
+                className="group relative flex cursor-pointer select-none flex-col items-start gap-2 rounded-xl border bg-card p-3 text-sm font-medium shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-colors hover:border-primary/40 hover:bg-accent has-[:checked]:border-primary has-[:checked]:bg-brand-soft has-[:checked]:text-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+              >
+                <input type="checkbox" name={a.key} value="1" defaultChecked={initial.amenities.includes(a.key)} className="peer sr-only" />
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-muted text-foreground/70 transition-colors group-has-[:checked]:bg-primary group-has-[:checked]:text-white">
+                  <AmenityIcon amenity={a.key} className="h-4 w-4" />
+                </span>
+                {a.short}
+                <Check className="absolute right-2.5 top-2.5 h-4 w-4 opacity-0 transition-opacity group-has-[:checked]:opacity-100" />
               </label>
             ))}
           </div>

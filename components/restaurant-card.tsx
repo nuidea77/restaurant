@@ -3,6 +3,7 @@ import { MapPin, Users, UtensilsCrossed } from "lucide-react";
 import { AMENITIES, UB } from "@/lib/constants";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
+import { AmenityIcon } from "@/components/amenity-icon";
 
 export function RestaurantCard({ r }: { r: RestaurantSearchRow }) {
   const cover = r.images?.[0];
@@ -57,8 +58,13 @@ export function RestaurantCard({ r }: { r: RestaurantSearchRow }) {
         {amenities.length > 0 && (
           <div className="mt-auto flex flex-wrap gap-1.5 border-t pt-3">
             {amenities.map((a) => (
-              <span key={a.key} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground/75">
-                {a.label}
+              <span
+                key={a.key}
+                title={a.label}
+                className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground/75"
+              >
+                <AmenityIcon amenity={a.key} className="h-3.5 w-3.5 text-primary" />
+                {a.short}
               </span>
             ))}
           </div>

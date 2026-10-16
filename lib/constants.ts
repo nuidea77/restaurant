@@ -71,10 +71,10 @@ export const CAPACITY_RANGES = [
 ] as const;
 
 export const AMENITIES = [
-  { key: "has_host", label: "Хөтлөгчтэй" },
-  { key: "has_stage", label: "Тайзтай" },
-  { key: "has_screen", label: "Дэлгэцтэй" },
-  { key: "has_parking", label: "Машины зогсоолтой" },
+  { key: "has_host", label: "Хөтлөгчтэй", short: "Хөтлөгч", hint: "Мэргэжлийн хөтлөгч" },
+  { key: "has_stage", label: "Тайзтай", short: "Тайз", hint: "Үзүүлбэр, тоглолтын тайз" },
+  { key: "has_screen", label: "Дэлгэцтэй", short: "Дэлгэц", hint: "LED дэлгэц, проектор" },
+  { key: "has_parking", label: "Машины зогсоолтой", short: "Зогсоол", hint: "Зочдод зориулсан зогсоол" },
 ] as const;
 
 export type AmenityKey = (typeof AMENITIES)[number]["key"];
