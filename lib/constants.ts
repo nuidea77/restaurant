@@ -33,7 +33,7 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const MENU_MIME_TYPES = ["application/pdf", "image/png", "image/jpeg"] as const;
 export const IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
-/** Vercel Blob дахь хавтаснууд: <folder>/<user_id>/<file> */
+/** data/uploads доторх хавтаснууд: <folder>/<user_id>/<file> */
 export const UPLOAD_FOLDERS = {
   menus: MENU_MIME_TYPES,
   images: IMAGE_MIME_TYPES,

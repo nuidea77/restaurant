@@ -44,7 +44,7 @@ export default async function DashboardPage() {
               <CardTitle>Заал болон хоолны зураг</CardTitle>
             </CardHeader>
             <CardContent>
-              <ImageManager images={restaurant.images ?? []} userId={userId} />
+              <ImageManager images={restaurant.images ?? []} />
             </CardContent>
           </Card>
 
@@ -57,7 +57,7 @@ export default async function DashboardPage() {
               </p>
             </CardHeader>
             <CardContent>
-              <MenuUploader userId={userId} />
+              <MenuUploader />
             </CardContent>
           </Card>
 

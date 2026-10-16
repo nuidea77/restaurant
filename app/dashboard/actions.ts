@@ -5,8 +5,8 @@ import { z } from "zod";
 import { DISTRICTS } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
 import { currentUserId } from "@/auth";
-import { isOwnBlobUrl } from "@/lib/blob";
 import { sql } from "@/lib/db";
+import { isOwnUploadUrl } from "@/lib/upload-path";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -66,7 +66,7 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
 
 export async function setImages(images: string[]): Promise<ActionResult> {
   const userId = await requireUser();
-  if (!images.every((url) => isOwnBlobUrl(url, "images", userId))) return { ok: false, error: "Буруу зургийн холбоос" };
+  if (!images.every((url) => isOwnUploadUrl(url, "images", userId))) return { ok: false, error: "Буруу зургийн холбоос" };
 
   const rows = await sql`update restaurants set images = ${images} where owner_id = ${userId} returning id`;
   if (rows.length === 0) return { ok: false, error: "Зураг хадгалж чадсангүй" };

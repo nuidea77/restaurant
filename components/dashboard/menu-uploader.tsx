@@ -8,7 +8,7 @@ import { directUpload } from "@/lib/upload";
 
 type Stage = "idle" | "uploading" | "extracting";
 
-export function MenuUploader({ userId }: { userId: string }) {
+export function MenuUploader() {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -21,7 +21,7 @@ export function MenuUploader({ userId }: { userId: string }) {
     }
     try {
       setStage("uploading");
-      const url = await directUpload(file, "menus", userId);
+      const url = await directUpload(file, "menus");
       setStage("extracting");
       const res = await fetch("/api/menus/extract", {
         method: "POST",

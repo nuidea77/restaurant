@@ -6,7 +6,7 @@ import { setImages } from "@/app/dashboard/actions";
 import { IMAGE_MIME_TYPES } from "@/lib/constants";
 import { directUpload } from "@/lib/upload";
 
-export function ImageManager({ images, userId }: { images: string[]; userId: string }) {
+export function ImageManager({ images }: { images: string[] }) {
   const [list, setList] = useState(images);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +24,7 @@ export function ImageManager({ images, userId }: { images: string[]; userId: str
     setError(null);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files)) urls.push(await directUpload(file, "images", userId));
+      for (const file of Array.from(files)) urls.push(await directUpload(file, "images"));
       await persist([...list, ...urls]);
     } catch (e) {
       setError((e as Error).message);

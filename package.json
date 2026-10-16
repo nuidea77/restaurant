@@ -4,17 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/migrate.mjs && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "vitest run",
-    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@google/genai": "^2.30.0",
-    "@neondatabase/serverless": "^1.2.0",
     "@radix-ui/react-slider": "^1.6.1",
-    "@vercel/blob": "^2.8.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

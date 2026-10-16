@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUserId } from "@/auth";
-import { isOwnBlobUrl } from "@/lib/blob";
-import { MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { sql } from "@/lib/db";
 import { getRestaurantByOwner } from "@/lib/queries";
+import { readOwnUpload } from "@/lib/storage";
 import { extractMenuPackages } from "@/lib/vertex";
 
 // Олон хуудастай PDF-ийг Gemini уншихад хугацаа шаардана.
 export const maxDuration = 60;
 
-const Body = z.object({ url: z.string().url() });
-
-const MIME_BY_EXT: Record<string, string> = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg" };
+const Body = z.object({ url: z.string().min(1) });
 
 export async function POST(request: Request) {
   const userId = await currentUserId();
@@ -21,22 +18,16 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Буруу хүсэлт" }, { status: 400 });
   const { url } = parsed.data;
-  if (!isOwnBlobUrl(url, "menus", userId)) return NextResponse.json({ error: "Хандах эрхгүй файл" }, { status: 403 });
 
   const restaurant = await getRestaurantByOwner(userId);
   if (!restaurant) return NextResponse.json({ error: "Эхлээд рестораны профайлаа үүсгэнэ үү" }, { status: 400 });
 
-  const mimeType = MIME_BY_EXT[new URL(url).pathname.split(".").pop()?.toLowerCase() ?? ""];
-  if (!mimeType) return NextResponse.json({ error: "Зөвшөөрөгдөөгүй файлын төрөл" }, { status: 400 });
-
-  const file = await fetch(url);
-  if (!file.ok) return NextResponse.json({ error: "Файл олдсонгүй" }, { status: 404 });
-  const data = Buffer.from(await file.arrayBuffer());
-  if (data.byteLength > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "Файл хэт том байна" }, { status: 400 });
+  const file = await readOwnUpload(url, "menus", userId).catch(() => null);
+  if (!file) return NextResponse.json({ error: "Файл олдсонгүй" }, { status: 404 });
 
   let packages;
   try {
-    packages = await extractMenuPackages({ data, mimeType });
+    packages = await extractMenuPackages(file);
   } catch (err) {
     console.error("Vertex AI extraction failed", err);
     return NextResponse.json({ error: "AI цэсийг уншиж чадсангүй. Дахин оролдоно уу." }, { status: 502 });

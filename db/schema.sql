@@ -1,5 +1,4 @@
--- Шинэ жилийн хүлээн авалтын платформ — Vercel Postgres (Neon) схем
-create extension if not exists pgcrypto;
+-- Шинэ жилийн хүлээн авалтын платформ — локал PGlite (Postgres) схем
 
 -- 0. Рестораны эзэмшигчид (Auth.js credentials)
 create table if not exists users (
