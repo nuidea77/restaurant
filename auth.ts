@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sql } from "@/lib/db";
+import { consumeChallenge } from "@/lib/challenges";
 import { authSecret } from "@/lib/env";
 import { normalizePhone } from "@/lib/phone";
 
@@ -36,6 +37,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               select id, password_hash from users where email = ${login.toLowerCase()}`;
         if (!user || !(await bcrypt.compare(parsed.data.password, user.password_hash))) return null;
         return { id: user.id };
+      },
+    }),
+    // SMS-ээр нэвтрэх: verify.mn-ээр баталгаажсан, нэг удаагийн challenge (id + зөвхөн тухайн хөтөчид өгсөн secret).
+    Credentials({
+      id: "sms",
+      credentials: { challengeId: {}, secret: {} },
+      async authorize(raw) {
+        const { challengeId, secret } = (raw ?? {}) as { challengeId?: string; secret?: string };
+        if (!challengeId || !secret) return null;
+        const userId = await consumeChallenge(challengeId, secret, "login");
+        return userId ? { id: userId } : null;
       },
     }),
   ],

@@ -122,3 +122,24 @@ create index if not exists idx_phone_verifications_user on phone_verifications(u
 -- Хот/аймаг (Улаанбаатараас гадна). Дүүрэг баганад УБ-ын дүүрэг эсвэл сум/хороо хадгална.
 alter table restaurants add column if not exists city varchar(100) not null default 'Улаанбаатар';
 create index if not exists idx_restaurant_city on restaurants(city);
+
+-- ---------------------------------------------------------------------------
+-- SMS-ээр нэвтрэх / нууц үг сэргээх (verify.mn). Нэвтрээгүй хэрэглэгчийн challenge.
+-- secret_hash: зөвхөн challenge эхлүүлсэн хөтөчид өгсөн нууц утгын sha256 — өөр хүн id-г мэдсэн ч ашиглаж чадахгүй.
+-- ---------------------------------------------------------------------------
+create table if not exists phone_challenges (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  phone varchar(16) not null,
+  purpose varchar(16) not null check (purpose in ('login', 'reset')),
+  session_id varchar(64) not null unique,
+  code varchar(16) not null,
+  instruction text,
+  sms_uri text,
+  secret_hash varchar(64) not null,
+  status varchar(16) not null default 'PENDING' check (status in ('PENDING', 'VERIFIED', 'EXPIRED')),
+  expires_at timestamp with time zone not null,
+  consumed_at timestamp with time zone,
+  created_at timestamp with time zone default now()
+);
+create index if not exists idx_phone_challenges_phone on phone_challenges(phone, created_at desc);
