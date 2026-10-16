@@ -29,6 +29,11 @@
    10 демо ресторан оруулна.
 5. **Byl webhook:** Byl dashboard → Webhooks → `https://<домэйн>/api/byl/webhook`, Signing secret → `BYL_WEBHOOK_SECRET`.
 
+**Google Maps:** Google Cloud Console дээр *Maps JavaScript API*, *Geocoding API*, *Maps Embed API*-г идэвхжүүлж
+API түлхүүр үүсгээд `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`-д, Map Management-ийн Map ID-г `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`-д
+хийнэ. Түлхүүрийг **HTTP referrer**-ээр (`https://<домэйн>/*`) хязгаарлана. `NEXT_PUBLIC_` хувьсагч build үед орох тул
+нэмсний дараа Redeploy хийнэ. Түлхүүргүй бол OpenStreetMap ажиллана.
+
 `DATABASE_URL` дутуу бол сайт 500 алдааны оронд юуг тохируулахыг (орчин, branch, олдсон хувьсагчдын нэр) харуулна.
 
 ### Byl, verify.mn туршилтын горим

@@ -1,34 +1,77 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
+import { APIProvider, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { Crosshair, Search } from "lucide-react";
+import { GoogleMapInner } from "@/components/google-map-inner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CITY_CENTERS, UB } from "@/lib/constants";
 
-// Leaflet нь window шаарддаг тул зөвхөн хөтөч дээр ачаална.
-const MapPickerInner = dynamic(() => import("./map-picker-inner"), {
+// Түлхүүргүй үеийн нөөц: Leaflet + OpenStreetMap (window шаарддаг тул зөвхөн хөтөч дээр).
+const OsmMapInner = dynamic(() => import("./map-picker-inner"), {
   ssr: false,
   loading: () => <div className="h-72 w-full animate-pulse rounded-lg border bg-muted" />,
 });
 
-type Hit = { display_name: string; lat: string; lon: string };
+const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+type Hit = { label: string; lat: number; lng: number };
+type Geocode = (query: string) => Promise<Hit[]>;
+type MapView = ComponentType<{
+  center: [number, number];
+  zoom: number;
+  position: [number, number] | null;
+  onPick: (lat: number, lng: number) => void;
+}>;
+
+type Props = { city: string; initial: { lat: number | null; lng: number | null } };
 
 /**
- * Газрын зураг дээр рестораны байршлыг сонгоно (OpenStreetMap, API түлхүүр шаардахгүй).
- * Хаягаар хайх (Nominatim), "Миний байршил", зураг дээр дарах эсвэл цэгийг чирэх.
- * Сонгосон утга latitude/longitude нэртэй hidden input-ээр форм руу явна.
+ * Газрын зураг дээр рестораны байршлыг сонгоно. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY байвал Google Maps
+ * (Maps JavaScript API + Geocoding API), үгүй бол OpenStreetMap. Сонгосон утга latitude/longitude
+ * нэртэй hidden input-ээр форм руу явна.
  */
-export function MapPicker({
-  city,
-  initial,
-  searchHint,
-}: {
-  city: string;
-  initial: { lat: number | null; lng: number | null };
-  searchHint?: string;
-}) {
+export function MapPicker(props: Props) {
+  if (GOOGLE_KEY) {
+    return (
+      <APIProvider apiKey={GOOGLE_KEY} language="mn" region="MN">
+        <GooglePicker {...props} />
+      </APIProvider>
+    );
+  }
+  return <PickerShell {...props} MapView={OsmMapInner} geocode={nominatim} />;
+}
+
+function GooglePicker(props: Props) {
+  const geocoding = useMapsLibrary("geocoding");
+  const geocode = useCallback<Geocode>(
+    async (query) => {
+      if (!geocoding) return [];
+      const { results } = await new geocoding.Geocoder()
+        .geocode({ address: query, componentRestrictions: { country: "MN" } })
+        .catch(() => ({ results: [] as google.maps.GeocoderResult[] }));
+      return results.slice(0, 5).map((r) => ({
+        label: r.formatted_address,
+        lat: r.geometry.location.lat(),
+        lng: r.geometry.location.lng(),
+      }));
+    },
+    [geocoding],
+  );
+  return <PickerShell {...props} MapView={GoogleMapInner} geocode={geocode} />;
+}
+
+const nominatim: Geocode = async (query) => {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=mn&accept-language=mn&q=${encodeURIComponent(query)}`,
+  ).catch(() => null);
+  const data: { display_name: string; lat: string; lon: string }[] = (await res?.json().catch(() => [])) ?? [];
+  return data.map((d) => ({ label: d.display_name, lat: Number(d.lat), lng: Number(d.lon) }));
+};
+
+function PickerShell({ city, initial, MapView, geocode }: Props & { MapView: MapView; geocode: Geocode }) {
   const [position, setPosition] = useState<[number, number] | null>(
     initial.lat != null && initial.lng != null ? [initial.lat, initial.lng] : null,
   );
@@ -53,14 +96,11 @@ export function MapPicker({
   }
 
   async function search() {
-    const q = [query || searchHint, city, "Mongolia"].filter(Boolean).join(", ");
+    if (!query.trim()) return;
     setMessage("Хайж байна...");
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=mn&accept-language=mn&q=${encodeURIComponent(q)}`,
-    ).catch(() => null);
-    const data: Hit[] = (await res?.json().catch(() => [])) ?? [];
-    setHits(data);
-    setMessage(data.length ? null : "Олдсонгүй. Газрын зураг дээр дарж байршлаа тэмдэглэнэ үү.");
+    const results = await geocode(`${query}, ${city}`);
+    setHits(results);
+    setMessage(results.length ? null : "Олдсонгүй. Газрын зураг дээр дарж байршлаа тэмдэглэнэ үү.");
   }
 
   function locate() {
@@ -98,22 +138,22 @@ export function MapPicker({
       {hits.length > 0 && (
         <ul className="divide-y overflow-hidden rounded-lg border bg-card text-sm">
           {hits.map((h) => (
-            <li key={`${h.lat},${h.lon}`}>
+            <li key={`${h.lat},${h.lng}`}>
               <button
                 type="button"
                 className="w-full px-3 py-2 text-left hover:bg-muted"
                 onClick={() => {
-                  pick(Number(h.lat), Number(h.lon), 17);
+                  pick(h.lat, h.lng, 17);
                   setHits([]);
                 }}
               >
-                {h.display_name}
+                {h.label}
               </button>
             </li>
           ))}
         </ul>
       )}
-      <MapPickerInner center={view.center} zoom={view.zoom} position={position} onPick={(lat, lng) => pick(lat, lng)} />
+      <MapView center={view.center} zoom={view.zoom} position={position} onPick={(lat, lng) => pick(lat, lng)} />
       <p className="text-xs text-muted-foreground">
         {message ??
           (position

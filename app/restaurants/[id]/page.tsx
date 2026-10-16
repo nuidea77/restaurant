@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, MapPin, Phone, Users, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, Check, MapPin, Navigation, Phone, Users, UtensilsCrossed } from "lucide-react";
 import { Gallery, SourceFiles } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,12 @@ export default async function RestaurantPage({ params }: { params: Params }) {
 
   const sourceFiles = [...new Set(packages.map((p) => p.file_url))];
   const mapQuery = r.latitude != null && r.longitude != null ? `${r.latitude},${r.longitude}` : `${r.address}, ${r.district}, ${r.city}`;
-  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
+  // Түлхүүртэй бол Google Maps Embed API (албан ёсны), үгүй бол түлхүүргүй embed.
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const mapSrc = mapsKey
+    ? `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent(mapQuery)}&language=mn&zoom=16`
+    : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`;
 
   const cheapest = packages[0]?.price_per_person;
 
@@ -153,7 +158,17 @@ export default async function RestaurantPage({ params }: { params: Params }) {
         </Card>
         <Card className="overflow-hidden">
           <CardBar icon={<MapPin />} title="Байршил" />
-          <iframe src={mapSrc} title="Байршил" className="h-72 w-full" loading="lazy" />
+          <iframe src={mapSrc} title="Байршил" className="h-72 w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+          <div className="border-t p-3">
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ variant: "outline", className: "w-full" })}
+            >
+              <Navigation className="h-4 w-4" /> Google Maps-ээр зам заах
+            </a>
+          </div>
         </Card>
       </Section>
     </>
