@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, MessageSquareText, Smartphone } from "lucide-react";
+import { CheckCircle2, Loader2, Send, Smartphone } from "lucide-react";
 import { confirmDemo, startPhoneVerification } from "@/app/verify/actions";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatPhone } from "@/lib/phone";
 import type { VerificationView } from "@/lib/verification";
 
 const SHORTCODE = "144773";
@@ -31,6 +30,8 @@ export function VerifyPhone({
   const [error, setError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [pending, startTransition] = useTransition();
+  const [checking, setChecking] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
   const done = useCallback(() => {
     setStatus("VERIFIED");
@@ -73,6 +74,19 @@ export function VerifyPhone({
     }
   }, [secondsLeft, status, verification]);
 
+  /** "Мессеж шалгах" — 3 секундийн автомат шалгалтыг хүлээлгүй шууд шалгана. */
+  async function checkNow() {
+    if (!verification) return;
+    setChecking(true);
+    setInfo(null);
+    const res = await fetch(`/api/verify/status?id=${verification.id}`, { cache: "no-store" }).catch(() => null);
+    const body = await res?.json().catch(() => null);
+    setChecking(false);
+    if (body?.status === "VERIFIED") return done();
+    if (body?.status === "EXPIRED") return setStatus("EXPIRED");
+    setInfo("SMS хараахан ирээгүй байна. Илгээсэн бол хэдэн секунд хүлээгээд дахин шалгана уу.");
+  }
+
   function start() {
     setError(null);
     startTransition(async () => {
@@ -80,6 +94,7 @@ export function VerifyPhone({
       if (!res.ok) return setError(res.error);
       setVerification(res.verification);
       setStatus("PENDING");
+      setInfo(null);
     });
   }
 
@@ -99,7 +114,7 @@ export function VerifyPhone({
 
   return (
     <Card className="w-full max-w-md overflow-hidden shadow-xl shadow-black/5">
-      <CardBar icon={<Smartphone />} title="Бүртгэл баталгаажуулах" count={active ? `${minutes}:${seconds}` : undefined} />
+      <CardBar icon={<Smartphone />} title="Бүртгэл баталгаажуулах" />
       <div className="space-y-5 p-6">
         {!active ? (
           <>
@@ -132,27 +147,51 @@ export function VerifyPhone({
           </>
         ) : (
           <>
-            <div className="rounded-xl border bg-accent p-5 text-center">
-              <p className="text-sm text-muted-foreground">
-                {formatPhone(verification.phone)} дугаараас <b className="text-foreground">{SHORTCODE}</b> руу илгээх код
-              </p>
-              <p className="mt-2 font-mono text-4xl font-bold tracking-[0.25em]">{verification.code}</p>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">SMS-ээр баталгаажуулах</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Доорх кодыг өөрийн утаснаас {SHORTCODE} руу илгээнэ үү.</p>
             </div>
-            {/* verify.mn-ийн зааврыг үгчлэн харуулна — аль дугаараас илгээхийг заадаг. */}
-            {verification.instruction && <p className="text-sm">{verification.instruction}</p>}
+            <div className="space-y-4 rounded-xl border border-primary/25 bg-brand-soft p-4">
+              {/* verify.mn-ийн зааврыг үгчлэн харуулна (аль дугаараас илгээхийг заадаг), кодыг тодруулна. */}
+              <p className="text-[15px] leading-relaxed">
+                <Instruction
+                  text={
+                    verification.instruction && mode === "verifymn"
+                      ? verification.instruction
+                      : `Та өөрийн ${verification.phone} дугаараас ${SHORTCODE} дугаарт "${verification.code}" гэж SMS илгээнэ үү.`
+                  }
+                  code={verification.code}
+                />
+              </p>
+              {mode === "verifymn" && verification.sms_uri && (
+                <a
+                  href={verification.sms_uri}
+                  className={buttonVariants({ variant: "outline", size: "lg", className: "w-full border-primary/50 text-primary" })}
+                >
+                  <Send className="h-4 w-4" /> SMS апп нээх
+                </a>
+              )}
+              <p className="text-xs text-muted-foreground">
+                SMS-ийн төлбөр: <b className="text-foreground">150₮</b> (үүрэн оператор тооцно).
+              </p>
+            </div>
+
+            <div className="space-y-1 text-center">
+              <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> SMS хүлээж байна...
+              </p>
+              <p className="font-mono text-sm font-semibold tabular-nums">
+                {String(minutes).padStart(2, "0")}:{seconds}
+              </p>
+            </div>
+
             {mode === "verifymn" ? (
-              <>
-                {verification.sms_uri && (
-                  <a href={verification.sms_uri} className={buttonVariants({ size: "lg", className: "w-full" })}>
-                    <MessageSquareText className="h-4 w-4" /> SMS илгээх
-                  </a>
-                )}
-                <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> SMS хүлээж байна...
-                </p>
-              </>
+              <Button variant="dark" size="lg" className="w-full" disabled={checking} onClick={checkNow}>
+                {checking ? "Шалгаж байна..." : "Мессеж шалгах"}
+              </Button>
             ) : (
               <Button
+                variant="dark"
                 size="lg"
                 className="w-full"
                 disabled={pending}
@@ -166,6 +205,7 @@ export function VerifyPhone({
                 Баталгаажуулах (туршилтын горим)
               </Button>
             )}
+            {info && <p className="text-center text-sm text-muted-foreground">{info}</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <button
               type="button"
@@ -181,5 +221,19 @@ export function VerifyPhone({
         )}
       </div>
     </Card>
+  );
+}
+
+/** Зааврын текст дэх кодыг тодруулна. */
+function Instruction({ text, code }: { text: string; code: string }) {
+  const quoted = `"${code}"`;
+  const i = text.indexOf(quoted);
+  if (i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <b className="font-bold">{quoted}</b>
+      {text.slice(i + quoted.length)}
+    </>
   );
 }
