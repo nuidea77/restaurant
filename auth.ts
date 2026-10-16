@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sql } from "@/lib/db";
+import { authSecret } from "@/lib/env";
 
 declare module "next-auth" {
   interface Session {
@@ -15,6 +16,7 @@ const Credentials_ = z.object({ email: z.email(), password: z.string().min(8) })
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Vercel болон `next start` дээр Host header-ийг итгэмжлэнэ (UntrustedHost алдаанаас сэргийлнэ).
   trustHost: true,
+  secret: authSecret(),
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
