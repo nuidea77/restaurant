@@ -9,6 +9,7 @@ import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, CITIES, DISTRICTS, 
 import { getFeaturedRestaurants, getSiteStats, searchRestaurants } from "@/lib/queries";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
+import { isValidISODate, todayISO } from "@/lib/dates";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -32,6 +33,8 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const maxPrice = num(one(sp.max));
   const capacity = CAPACITY_RANGES.find((c) => c.key === one(sp.capacity));
   const amenities = AMENITIES.filter((a) => one(sp[a.key]) === "1").map((a) => a.key);
+  const rawDate = one(sp.date) ?? "";
+  const date = isValidISODate(rawDate) && rawDate >= todayISO() ? rawDate : undefined;
 
   let results: RestaurantSearchRow[] = [];
   let error = false;
@@ -47,6 +50,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       hasStage: amenities.includes("has_stage"),
       hasScreen: amenities.includes("has_screen"),
       hasParking: amenities.includes("has_parking"),
+      date,
     });
   } catch (err) {
     console.error("search failed", err);
@@ -60,6 +64,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     maxPrice: maxPrice ?? BUDGET_MAX,
     capacity: capacity?.key,
     amenities,
+    date,
   };
 
   const [stats, featured] = await Promise.all([
@@ -159,7 +164,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {results.map((r) => (
-                  <RestaurantCard key={r.id} r={r} />
+                  <RestaurantCard key={r.id} r={r} date={date} />
                 ))}
               </div>
             )}

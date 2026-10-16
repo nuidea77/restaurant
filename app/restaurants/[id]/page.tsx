@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, MapPin, Navigation, Phone, Users, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, MapPin, Navigation, Phone, Users, UtensilsCrossed } from "lucide-react";
 import { Gallery } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
@@ -10,8 +10,11 @@ import { AMENITIES, UB } from "@/lib/constants";
 import { getPackages, getRestaurant } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
 import { AmenityIcon } from "@/components/amenity-icon";
+import { Availability } from "@/components/availability";
+import { isValidISODate } from "@/lib/dates";
 
 type Params = Promise<{ id: string }>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 async function load(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
@@ -33,8 +36,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function RestaurantPage({ params }: { params: Params }) {
+export default async function RestaurantPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   const data = await load((await params).id);
+  const qd = (await searchParams).date;
+  const date = typeof qd === "string" && isValidISODate(qd) ? qd : undefined;
   if (!data) notFound();
   const { restaurant: r, packages } = data;
 
@@ -173,6 +178,17 @@ export default async function RestaurantPage({ params }: { params: Params }) {
             </Card>
           ))}
         </div>
+      </Section>
+
+      <Divider />
+
+      <Section id="dates" className="scroll-mt-16">
+        <Card className="overflow-hidden">
+          <CardBar icon={<CalendarDays />} title="Захиалга авах өдрүүд" />
+          <div className="p-5">
+            <Availability dates={r.dates} phone={r.phone} initialDate={date} />
+          </div>
+        </Card>
       </Section>
 
       <Divider />

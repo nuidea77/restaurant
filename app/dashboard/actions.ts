@@ -10,6 +10,7 @@ import { sql } from "@/lib/db";
 import { appOrigin } from "@/lib/origin";
 import { confirmDemoPayment, startBylCheckout } from "@/lib/payments";
 import { isOwnBlobUrl } from "@/lib/blob";
+import { isValidISODate, todayISO } from "@/lib/dates";
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
@@ -92,6 +93,23 @@ export async function setImages(restaurantId: string, images: string[]): Promise
   const rows = await sql`
     update restaurants set images = ${images} where id = ${restaurantId}::uuid and owner_id = ${userId} returning id`;
   if (rows.length === 0) return { ok: false, error: "Зураг хадгалж чадсангүй" };
+  revalidatePath("/dashboard", "layout");
+  return { ok: true };
+}
+
+/** Захиалга авах өдрүүдийг бүхэлд нь солино. Өнгөрсөн өдрүүдийг хадгалахгүй. */
+export async function setAvailableDates(restaurantId: string, dates: unknown): Promise<ActionResult> {
+  const userId = await requireUser();
+  const parsed = z.array(z.string()).max(400).safeParse(dates);
+  if (!parsed.success || !parsed.data.every(isValidISODate)) return { ok: false, error: "Өдрийн формат буруу" };
+  const today = todayISO();
+  const clean = [...new Set(parsed.data)].filter((d) => d >= today).sort();
+
+  const rows = await sql`
+    update restaurants set available_dates = ${clean}::date[]
+    where id = ${restaurantId}::uuid and owner_id = ${userId}
+    returning id`;
+  if (rows.length === 0) return { ok: false, error: "Хадгалж чадсангүй" };
   revalidatePath("/dashboard", "layout");
   return { ok: true };
 }

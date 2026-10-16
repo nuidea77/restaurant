@@ -146,3 +146,7 @@ create table if not exists phone_challenges (
   created_at timestamp with time zone default now()
 );
 create index if not exists idx_phone_challenges_phone on phone_challenges(phone, created_at desc);
+
+-- Захиалга авах боломжтой өдрүүд (эзэмшигч хуанлиас сонгоно)
+alter table restaurants add column if not exists available_dates date[] not null default '{}';
+create index if not exists idx_restaurant_available_dates on restaurants using gin (available_dates);

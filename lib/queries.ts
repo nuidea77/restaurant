@@ -14,6 +14,8 @@ export type SearchFilters = {
   hasStage?: boolean;
   hasScreen?: boolean;
   hasParking?: boolean;
+  /** "YYYY-MM-DD" — тухайн өдөр захиалга авдаг ресторан. */
+  date?: string;
 };
 
 /** Баталгаажсан багцтай ресторануудыг 1 хүний үнэ, багтаамж, дүүрэг, нөхцөлөөр шүүнэ. */
@@ -39,26 +41,29 @@ export function searchRestaurants(f: SearchFilters) {
       and (${!!f.hasStage} = false or r.has_stage)
       and (${!!f.hasScreen} = false or r.has_screen)
       and (${!!f.hasParking} = false or r.has_parking)
+      and (${f.date ?? null}::date is null or ${f.date ?? null}::date = any(r.available_dates))
     group by r.id
     order by min(p.price_per_person) asc`;
 }
 
+// available_dates (date[])-г цагийн бүсгүй "YYYY-MM-DD" мөрийн массив болгож `dates` нэрээр буцаана.
+
 /** Нийтийн хуудас — зөвхөн төлбөр төлөгдсөн ресторан. */
 export async function getRestaurant(id: string) {
-  const [r] = await sql<Restaurant>`select * from restaurants where id = ${id} and is_paid`;
+  const [r] = await sql<Restaurant>`select r.*, coalesce(array(select to_char(d, 'YYYY-MM-DD') from unnest(r.available_dates) d order by d), '{}') as dates from restaurants r where r.id = ${id} and r.is_paid`;
   return r ?? null;
 }
 
 /** Эзэмшигчийн өөрийн ресторан (төлбөрийн төлөвөөс үл хамааран). */
 export async function getOwnedRestaurant(id: string, ownerId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const [r] = await sql<Restaurant>`select * from restaurants where id = ${id} and owner_id = ${ownerId}`;
+  const [r] = await sql<Restaurant>`select r.*, coalesce(array(select to_char(d, 'YYYY-MM-DD') from unnest(r.available_dates) d order by d), '{}') as dates from restaurants r where r.id = ${id} and r.owner_id = ${ownerId}`;
   return r ?? null;
 }
 
 export function getOwnerRestaurants(ownerId: string) {
   return sql<OwnerRestaurant>`
-    select r.*,
+    select r.*, coalesce(array(select to_char(d, 'YYYY-MM-DD') from unnest(r.available_dates) d order by d), '{}') as dates,
            count(p.id)::int as package_count,
            count(p.id) filter (where not p.is_verified)::int as pending_count
     from restaurants r

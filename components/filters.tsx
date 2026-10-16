@@ -3,15 +3,17 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Loader2, SlidersHorizontal, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
 import { AMENITIES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
+import { todayISO } from "@/lib/dates";
 import { AmenityIcon } from "@/components/amenity-icon";
 
 export type FilterValues = {
@@ -21,6 +23,7 @@ export type FilterValues = {
   maxPrice: number;
   capacity?: string;
   amenities: string[];
+  date?: string;
 };
 
 const chip =
@@ -36,7 +39,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
   // Гар утсанд шүүлтүүр анхнаасаа хураагдсан байна (жагсаалтыг доош түлхэхгүй).
   // Шүүлтүүр сонгосны дараа (URL өөрчлөгдөж дахин үүсэхэд) нээлттэй хэвээр үлдэнэ.
   const [open, setOpen] = useState(
-    Boolean(initial.city || initial.district || initial.capacity || initial.amenities.length) ||
+    Boolean(initial.city || initial.district || initial.capacity || initial.date || initial.amenities.length) ||
       initial.minPrice > BUDGET_MIN ||
       initial.maxPrice < BUDGET_MAX,
   );
@@ -45,6 +48,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
     (initial.city ? 1 : 0) +
     (initial.district ? 1 : 0) +
     (initial.capacity ? 1 : 0) +
+    (initial.date ? 1 : 0) +
     initial.amenities.length +
     (initial.minPrice > BUDGET_MIN || initial.maxPrice < BUDGET_MAX ? 1 : 0);
 
@@ -91,6 +95,35 @@ export function Filters({ initial }: { initial: FilterValues }) {
         }}
         className={`space-y-6 p-4 ${open ? "block" : "hidden"} lg:block`}
       >
+        <div className="space-y-2">
+          <Label htmlFor="date">Хүлээн авалтын өдөр</Label>
+          <div className="relative">
+            <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="date"
+              name="date"
+              type="date"
+              min={todayISO()}
+              defaultValue={initial.date ?? ""}
+              className="pl-9 pr-9"
+            />
+            {initial.date && (
+              <button
+                type="button"
+                aria-label="Өдөр арилгах"
+                onClick={() => {
+                  const el = formRef.current?.elements.namedItem("date") as HTMLInputElement | null;
+                  if (el) el.value = "";
+                  apply();
+                }}
+                className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-accent"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="city">Хот / аймаг</Label>
           <Select className="w-full" id="city" name="city" value={city} onChange={(e) => setCity(e.target.value)}>

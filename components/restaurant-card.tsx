@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { MapPin, Users, UtensilsCrossed } from "lucide-react";
+import { CalendarCheck, MapPin, Users, UtensilsCrossed } from "lucide-react";
 import { AMENITIES, UB } from "@/lib/constants";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
 import { AmenityIcon } from "@/components/amenity-icon";
+import { formatDayMN } from "@/lib/dates";
 
-export function RestaurantCard({ r }: { r: RestaurantSearchRow }) {
+export function RestaurantCard({ r, date }: { r: RestaurantSearchRow; date?: string }) {
   const cover = r.images?.[0];
   const sameRange = Number(r.min_price) === Number(r.max_price);
   const place = r.city === UB ? r.district : `${r.city}, ${r.district}`;
@@ -13,7 +14,7 @@ export function RestaurantCard({ r }: { r: RestaurantSearchRow }) {
 
   return (
     <Link
-      href={`/restaurants/${r.id}`}
+      href={date ? `/restaurants/${r.id}?date=${date}#dates` : `/restaurants/${r.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
@@ -37,6 +38,11 @@ export function RestaurantCard({ r }: { r: RestaurantSearchRow }) {
         <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
           {r.package_count} багц
         </span>
+        {date && (
+          <span className="absolute left-3 top-11 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+            <CalendarCheck className="h-3.5 w-3.5" /> {formatDayMN(date)} сул
+          </span>
+        )}
         <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 text-white">
           <h3 className="text-lg font-semibold leading-tight tracking-tight drop-shadow">{r.name}</h3>
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs backdrop-blur">

@@ -15,6 +15,8 @@ export type Restaurant = {
   latitude: number | null;
   longitude: number | null;
   images: string[];
+  /** Захиалга авах өдрүүд, "YYYY-MM-DD", эрэмбэлсэн. */
+  dates: string[];
   is_paid: boolean;
   paid_at: string | null;
   created_at: string;

@@ -2,7 +2,7 @@
 // Vercel дээр `npm run build`-ийн өмнө автоматаар ажиллана. Гараар: `npm run db:migrate`.
 import { readFile } from "node:fs/promises";
 import { connect, findDatabaseUrl } from "./neon-node.mjs";
-import { seedDemo } from "./seed-core.mjs";
+import { demoDates, seedDemo } from "./seed-core.mjs";
 
 const url = findDatabaseUrl();
 if (!url) {
@@ -19,6 +19,15 @@ await db.sql`
   update restaurants
   set images = array(select regexp_replace(x, '^/demo/(r[0-9]+-[12])\\.svg$', '/demo/\\1.jpg') from unnest(images) x)
   where images::text ~ '/demo/r[0-9]+-[12]\\.svg'`;
+
+// Өмнө нь seed хийгдсэн демо ресторанд захиалгын өдөр байхгүй бол нөхөж оруулна.
+const { rows: demo } = await db.sql`
+  select r.id, u.email from restaurants r join users u on u.id = r.owner_id
+  where u.email like 'demo%@demo.mn' and cardinality(r.available_dates) = 0`;
+for (const r of demo) {
+  const n = Number(/^demo(\d+)@/.exec(r.email)?.[1] ?? 1);
+  await db.sql`update restaurants set available_dates = ${demoDates(n)}::date[] where id = ${r.id}`;
+}
 
 if (process.env.DEMO_DATA !== "false") {
   const { rows } = await db.sql`select count(*)::int as n from restaurants`;

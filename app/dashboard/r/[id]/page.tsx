@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DatesManager } from "@/components/dashboard/dates-manager";
 import { ImageManager } from "@/components/dashboard/image-manager";
 import { MenuUploader } from "@/components/dashboard/menu-uploader";
 import { PackageList } from "@/components/dashboard/package-list";
 import { ProfileForm } from "@/components/dashboard/profile-form";
-import { ArrowLeft, ArrowUpRight, CheckCircle2, CreditCard, Images, Sparkles, Store } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, CheckCircle2, CreditCard, Images, Sparkles, Store } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
@@ -83,6 +84,22 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
             <ProfileForm restaurant={restaurant} userId={userId} />
           </div>
         </Card>
+
+        {restaurant && (
+          <Card className="overflow-hidden">
+            <CardBar icon={<CalendarDays />} title="Захиалга авах өдрүүд" count={restaurant.dates.length} />
+            <div className="grid gap-6 p-5 md:grid-cols-[1fr_minmax(0,22rem)]">
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  Хүлээн авалт хийх боломжтой (заал сул) өдрүүдээ хуанлиас дарж сонгоно уу. Сонгосон өдрүүд таны
+                  рестораны хуудсанд харагдах ба хэрэглэгчид өдрөөр шүүж хайна.
+                </p>
+                <p>Захиалга орж дүүрсэн өдрийг дахин дарж хасаад хадгална уу.</p>
+              </div>
+              <DatesManager restaurantId={restaurant.id} dates={restaurant.dates} />
+            </div>
+          </Card>
+        )}
 
         {restaurant && (
           <div className="grid gap-6 lg:grid-cols-2">
