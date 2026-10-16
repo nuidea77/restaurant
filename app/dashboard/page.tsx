@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Divider, Section } from "@/components/ui/frame";
-import { LISTING_FEE } from "@/lib/constants";
 import { getOwnerRestaurants } from "@/lib/queries";
-import { formatMNT } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const userId = await currentUserId();
@@ -48,9 +46,7 @@ export default async function DashboardPage() {
                 <Store />
               </EmptyMedia>
               <EmptyTitle>Одоогоор ресторан алга</EmptyTitle>
-              <EmptyDescription>
-                Эхний рестораныхаа мэдээллийг оруулаад {formatMNT(LISTING_FEE)} төлөхөд нийтэд харагдана.
-              </EmptyDescription>
+              <EmptyDescription>Эхний рестораныхаа мэдээллийг оруулна уу.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Link href="/dashboard/new" className={buttonVariants({})}>
