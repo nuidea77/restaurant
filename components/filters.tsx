@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Label, Select } from "@/components/ui/input";
@@ -15,12 +17,37 @@ export type FilterValues = {
   amenities: string[];
 };
 
-// GET форм тул JS-гүй орчинд ч ажиллана; slider-ийн утгыг hidden input-ээр дамжуулна.
+// Утга өөрчлөгдөх бүрт URL-ийг шинэчилж шууд хайна. JS-гүй орчинд энгийн GET форм хэвээр ажиллана.
 export function Filters({ initial }: { initial: FilterValues }) {
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [budget, setBudget] = useState<number[]>([initial.minPrice, initial.maxPrice]);
+  const [pending, startTransition] = useTransition();
+
+  function apply(range = budget) {
+    if (!formRef.current) return;
+    const params = new URLSearchParams();
+    for (const [key, value] of new FormData(formRef.current)) {
+      if (key !== "min" && key !== "max" && value) params.set(key, String(value));
+    }
+    if (range[0] > BUDGET_MIN) params.set("min", String(range[0]));
+    if (range[1] < BUDGET_MAX) params.set("max", String(range[1]));
+    const query = params.toString();
+    startTransition(() => router.replace(query ? `/?${query}` : "/", { scroll: false }));
+  }
 
   return (
-    <form method="get" action="/" className="space-y-5 rounded-lg border bg-card p-5">
+    <form
+      ref={formRef}
+      method="get"
+      action="/"
+      onChange={() => apply()}
+      onSubmit={(e) => {
+        e.preventDefault();
+        apply();
+      }}
+      className="space-y-5 rounded-lg border bg-card p-5"
+    >
       <div className="space-y-2">
         <Label htmlFor="district">Дүүрэг</Label>
         <Select id="district" name="district" defaultValue={initial.district ?? ""}>
@@ -35,7 +62,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
 
       <div className="space-y-3">
         <Label>1 хүний төсөв</Label>
-        <Slider min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP} value={budget} onValueChange={setBudget} minStepsBetweenThumbs={1} />
+        <Slider min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP} value={budget} onValueChange={setBudget} onValueCommit={apply} minStepsBetweenThumbs={1} />
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>{formatMNT(budget[0])}</span>
           <span>
@@ -68,13 +95,16 @@ export function Filters({ initial }: { initial: FilterValues }) {
         ))}
       </fieldset>
 
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1">
-          Шүүх
-        </Button>
-        <a href="/" className="inline-flex h-10 items-center rounded-md border px-4 text-sm hover:bg-muted">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-muted-foreground" aria-live="polite">
+          {pending ? "Хайж байна..." : ""}
+        </span>
+        <noscript>
+          <Button type="submit">Шүүх</Button>
+        </noscript>
+        <Link href="/" scroll={false} className="inline-flex h-10 items-center rounded-md border px-4 text-sm hover:bg-muted">
           Цэвэрлэх
-        </a>
+        </Link>
       </div>
     </form>
   );

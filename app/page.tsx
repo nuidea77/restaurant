@@ -60,7 +60,8 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside>
-          <Filters initial={initial} />
+          {/* URL өөрчлөгдөхөд (жишээ нь "Цэвэрлэх") талбаруудыг шинэ утгаар дахин үүсгэнэ. */}
+          <Filters key={JSON.stringify(initial)} initial={initial} />
         </aside>
         <section className="space-y-4">
           <p className="text-sm text-muted-foreground">
