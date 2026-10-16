@@ -9,25 +9,29 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatPhone } from "@/lib/phone";
 import type { VerificationView } from "@/lib/verification";
 
 const SHORTCODE = "144773";
 const POLL_MS = 3000; // verify.mn: 3 секундээс хурдан шалгах шаардлагагүй
 
 export function VerifyPhone({
-  initialPhone,
+  registeredPhone,
   initialVerification,
+  initialError,
   mode,
 }: {
-  initialPhone: string;
+  /** Бүртгүүлсэн дугаар. Байвал зөвхөн тэр дугаараар баталгаажуулна (өөр дугаар оруулахгүй). */
+  registeredPhone: string | null;
   initialVerification: VerificationView | null;
+  initialError: string | null;
   mode: "verifymn" | "demo";
 }) {
   const router = useRouter();
-  const [phone, setPhone] = useState(initialPhone);
+  const [phone, setPhone] = useState(registeredPhone ?? "");
   const [verification, setVerification] = useState(initialVerification);
   const [status, setStatus] = useState<"PENDING" | "VERIFIED" | "EXPIRED" | null>(initialVerification ? "PENDING" : null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [pending, startTransition] = useTransition();
   const [checking, setChecking] = useState(false);
@@ -121,7 +125,10 @@ export function VerifyPhone({
             <div>
               <h1 className="text-xl font-semibold tracking-tight">Утасны дугаараа баталгаажуулна уу</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Та өөрийн утаснаас {SHORTCODE} дугаарт богино код илгээж баталгаажуулна. SMS-ийн төлбөр 150₮.
+                {registeredPhone
+                  ? `Бүртгүүлсэн ${formatPhone(registeredPhone)} дугаараасаа ${SHORTCODE} руу код илгээж баталгаажуулна.`
+                  : `Утасны дугаараа оруулаад ${SHORTCODE} руу код илгээж баталгаажуулна.`}{" "}
+                SMS-ийн төлбөр 150₮.
               </p>
             </div>
             {status === "EXPIRED" && (
@@ -129,27 +136,33 @@ export function VerifyPhone({
                 Хугацаа дууссан тул өмнөх код хүчингүй боллоо. Шинэ код авна уу.
               </p>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="verify-phone">Утасны дугаар</Label>
-              <Input
-                id="verify-phone"
-                type="tel"
-                inputMode="numeric"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="9911 2233"
-              />
-            </div>
+            {/* Хуучин (имэйлээр бүртгүүлсэн) хэрэглэгч л дугаараа оруулна. */}
+            {!registeredPhone && (
+              <div className="space-y-2">
+                <Label htmlFor="verify-phone">Утасны дугаар</Label>
+                <Input
+                  id="verify-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="9911 2233"
+                />
+              </div>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button size="lg" className="w-full" onClick={start} disabled={pending || !phone}>
-              {pending ? "Түр хүлээнэ үү..." : status === "EXPIRED" ? "Шинэ код авах" : "Баталгаажуулах код авах"}
+              {pending ? "Түр хүлээнэ үү..." : status === "EXPIRED" || registeredPhone ? "Шинэ код авах" : "Баталгаажуулах код авах"}
             </Button>
           </>
         ) : (
           <>
             <div>
               <h1 className="text-xl font-semibold tracking-tight">SMS-ээр баталгаажуулах</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Доорх кодыг өөрийн утаснаас {SHORTCODE} руу илгээнэ үү.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Бүртгүүлсэн <b className="text-foreground">{formatPhone(verification.phone)}</b> дугаараасаа доорх кодыг{" "}
+                {SHORTCODE} руу илгээнэ үү.
+              </p>
             </div>
             <div className="space-y-4 rounded-xl border border-primary/25 bg-brand-soft p-4">
               {/* verify.mn-ийн зааврыг үгчлэн харуулна (аль дугаараас илгээхийг заадаг), кодыг тодруулна. */}
@@ -207,16 +220,18 @@ export function VerifyPhone({
             )}
             {info && <p className="text-center text-sm text-muted-foreground">{info}</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <button
-              type="button"
-              className="w-full text-sm text-muted-foreground underline"
-              onClick={() => {
-                setVerification(null);
-                setStatus(null);
-              }}
-            >
-              Өөр дугаар оруулах
-            </button>
+            {!registeredPhone && (
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground underline"
+                onClick={() => {
+                  setVerification(null);
+                  setStatus(null);
+                }}
+              >
+                Өөр дугаар оруулах
+              </button>
+            )}
           </>
         )}
       </div>
