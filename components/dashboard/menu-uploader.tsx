@@ -8,7 +8,7 @@ import { directUpload } from "@/lib/upload";
 
 type Stage = "idle" | "uploading" | "extracting";
 
-export function MenuUploader() {
+export function MenuUploader({ userId }: { userId: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -21,12 +21,12 @@ export function MenuUploader() {
     }
     try {
       setStage("uploading");
-      const { path } = await directUpload(file, "menus");
+      const url = await directUpload(file, "menus", userId);
       setStage("extracting");
       const res = await fetch("/api/menus/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path }),
+        body: JSON.stringify({ url }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "AI боловсруулалт амжилтгүй");

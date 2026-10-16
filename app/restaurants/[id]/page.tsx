@@ -5,25 +5,17 @@ import { Gallery, SourceFiles } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AMENITIES } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/server";
-import type { MenuPackage, Restaurant } from "@/lib/types";
+import { getPackages, getRestaurant } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
 
 type Params = Promise<{ id: string }>;
 
 async function load(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const supabase = await createClient();
-  const { data: restaurant } = await supabase.from("restaurants").select("*").eq("id", id).maybeSingle<Restaurant>();
+  const restaurant = await getRestaurant(id);
   if (!restaurant) return null;
-  const { data: packages } = await supabase
-    .from("menu_packages")
-    .select("*")
-    .eq("restaurant_id", id)
-    .eq("is_verified", true)
-    .order("price_per_person", { ascending: true })
-    .returns<MenuPackage[]>();
-  return { restaurant, packages: packages ?? [] };
+  const packages = await getPackages(id, true);
+  return { restaurant, packages };
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {

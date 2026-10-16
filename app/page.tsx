@@ -1,7 +1,7 @@
 import { Filters, type FilterValues } from "@/components/filters";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, DISTRICTS } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/server";
+import { searchRestaurants } from "@/lib/queries";
 import type { RestaurantSearchRow } from "@/lib/types";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -24,19 +24,24 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const capacity = CAPACITY_RANGES.find((c) => c.key === one(sp.capacity));
   const amenities = AMENITIES.filter((a) => one(sp[a.key]) === "1").map((a) => a.key);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("search_restaurants", {
-    p_district: district ?? null,
-    p_min_price: minPrice ?? null,
-    p_max_price: maxPrice ?? null,
-    p_min_capacity: capacity?.min ?? null,
-    p_max_capacity: capacity?.max ?? null,
-    p_has_host: amenities.includes("has_host") || null,
-    p_has_stage: amenities.includes("has_stage") || null,
-    p_has_screen: amenities.includes("has_screen") || null,
-    p_has_parking: amenities.includes("has_parking") || null,
-  });
-  const results = (data ?? []) as RestaurantSearchRow[];
+  let results: RestaurantSearchRow[] = [];
+  let error = false;
+  try {
+    results = await searchRestaurants({
+      district,
+      minPrice,
+      maxPrice,
+      minCapacity: capacity?.min,
+      maxCapacity: capacity?.max,
+      hasHost: amenities.includes("has_host"),
+      hasStage: amenities.includes("has_stage"),
+      hasScreen: amenities.includes("has_screen"),
+      hasParking: amenities.includes("has_parking"),
+    });
+  } catch (err) {
+    console.error("search failed", err);
+    error = true;
+  }
 
   const initial: FilterValues = {
     district,

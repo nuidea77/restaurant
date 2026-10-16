@@ -5,33 +5,17 @@ import { MenuUploader } from "@/components/dashboard/menu-uploader";
 import { PackageReview } from "@/components/dashboard/package-review";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
-import type { MenuPackage, Restaurant } from "@/lib/types";
+import { currentUserId } from "@/auth";
+import { getPackages, getRestaurantByOwner } from "@/lib/queries";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = await currentUserId();
+  if (!userId) redirect("/login");
 
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("*")
-    .eq("owner_id", user.id)
-    .maybeSingle<Restaurant>();
+  const restaurant = await getRestaurantByOwner(userId);
+  const packages = restaurant ? await getPackages(restaurant.id, false) : [];
 
-  const { data: packages } = restaurant
-    ? await supabase
-        .from("menu_packages")
-        .select("*")
-        .eq("restaurant_id", restaurant.id)
-        .order("is_verified", { ascending: true })
-        .order("created_at", { ascending: false })
-        .returns<MenuPackage[]>()
-    : { data: [] as MenuPackage[] };
-
-  const pendingCount = packages?.filter((p) => !p.is_verified).length ?? 0;
+  const pendingCount = packages.filter((p) => !p.is_verified).length;
 
   return (
     <div className="space-y-6">
@@ -60,7 +44,7 @@ export default async function DashboardPage() {
               <CardTitle>Заал болон хоолны зураг</CardTitle>
             </CardHeader>
             <CardContent>
-              <ImageManager images={restaurant.images ?? []} />
+              <ImageManager images={restaurant.images ?? []} userId={userId} />
             </CardContent>
           </Card>
 
@@ -73,7 +57,7 @@ export default async function DashboardPage() {
               </p>
             </CardHeader>
             <CardContent>
-              <MenuUploader />
+              <MenuUploader userId={userId} />
             </CardContent>
           </Card>
 
@@ -81,9 +65,9 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-semibold">
               Багцууд {pendingCount > 0 && <span className="text-base text-amber-700">({pendingCount} шалгах)</span>}
             </h2>
-            {!packages?.length && <p className="text-muted-foreground">Одоогоор багц алга. Дээрээс цэсээ байршуулна уу.</p>}
+            {!packages.length && <p className="text-muted-foreground">Одоогоор багц алга. Дээрээс цэсээ байршуулна уу.</p>}
             <div className="grid gap-4 md:grid-cols-2">
-              {packages?.map((p) => <PackageReview key={`${p.id}-${p.is_verified}-${p.total_price}`} pkg={p} />)}
+              {packages.map((p) => <PackageReview key={`${p.id}-${p.is_verified}-${p.total_price}`} pkg={p} />)}
             </div>
           </section>
         </>

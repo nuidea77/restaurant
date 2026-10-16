@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/auth/actions";
+import { auth } from "@/auth";
 import { buttonVariants } from "@/components/ui/button";
 
 export async function SiteHeader() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await auth();
+  const user = session?.user;
 
   return (
     <header className="border-b bg-card">
@@ -20,7 +19,7 @@ export async function SiteHeader() {
               <Link href="/dashboard" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                 Миний ресторан
               </Link>
-              <form action="/auth/signout" method="post">
+              <form action={logout}>
                 <button className={buttonVariants({ variant: "outline", size: "sm" })}>Гарах</button>
               </form>
             </>
