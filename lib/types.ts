@@ -24,7 +24,7 @@ export type MenuPackage = {
   id: string;
   restaurant_id: string;
   package_name: string;
-  file_url: string;
+  file_url: string | null;
   total_price: number;
   person_count: number;
   price_per_person: number;

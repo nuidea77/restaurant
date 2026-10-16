@@ -123,6 +123,25 @@ export async function updatePackage(id: string, input: unknown, verify: boolean)
   return { ok: true };
 }
 
+/** Эзэмшигч цэсгүйгээр багцаа гараар нэмнэ. */
+export async function createPackage(restaurantId: string, input: unknown, verify: boolean): Promise<ActionResult> {
+  const userId = await requireUser();
+  const parsed = PackageSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const p = parsed.data;
+
+  const rows = await sql`
+    insert into menu_packages (restaurant_id, package_name, file_url, total_price, person_count, price_per_person, items, is_verified)
+    select id, ${p.package_name}, null, ${p.total_price}, ${p.person_count},
+      ${pricePerPerson(p.total_price, p.person_count)}, ${JSON.stringify(p.items)}::jsonb, ${verify}
+    from restaurants where id = ${restaurantId}::uuid and owner_id = ${userId}
+    returning id`;
+  if (rows.length === 0) return { ok: false, error: "Багц нэмж чадсангүй" };
+
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, id: rows[0].id as string };
+}
+
 export async function deletePackage(id: string): Promise<ActionResult> {
   const userId = await requireUser();
   const rows = await sql`

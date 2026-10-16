@@ -2,12 +2,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ImageManager } from "@/components/dashboard/image-manager";
 import { MenuUploader } from "@/components/dashboard/menu-uploader";
-import { PackageReview } from "@/components/dashboard/package-review";
+import { PackageList } from "@/components/dashboard/package-list";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { ArrowLeft, ArrowUpRight, CheckCircle2, CreditCard, Images, Sparkles, Store } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Divider, Section } from "@/components/ui/frame";
 import { currentUserId } from "@/auth";
 import { LISTING_FEE } from "@/lib/constants";
@@ -111,33 +110,7 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
         <>
           <Divider />
           <Section>
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">Багцууд</h2>
-                <p className="mt-1 text-muted-foreground">AI-ийн гаргасан багцыг шалгаж, засаж, баталгаажуулна.</p>
-              </div>
-              {pendingCount > 0 && (
-                <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
-                  {pendingCount} багц шалгах шаардлагатай
-                </span>
-              )}
-            </div>
-            {!packages.length && (
-              <Empty className="rounded-xl border border-dashed bg-card py-12">
-                <EmptyHeader className="mb-0">
-                  <EmptyMedia variant="icon">
-                    <Sparkles />
-                  </EmptyMedia>
-                  <EmptyTitle>Одоогоор багц алга</EmptyTitle>
-                  <EmptyDescription>Дээрээс цэсээ байршуулахад AI багцуудыг энд гаргана.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            )}
-            <div className="grid gap-4 md:grid-cols-2">
-              {packages.map((p) => (
-                <PackageReview key={`${p.id}-${p.is_verified}-${p.total_price}`} pkg={p} />
-              ))}
-            </div>
+            <PackageList restaurantId={restaurant.id} packages={packages} />
           </Section>
         </>
       )}

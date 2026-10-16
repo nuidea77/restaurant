@@ -42,6 +42,9 @@ create table if not exists menu_packages (
   created_at timestamp with time zone default now()
 );
 
+-- Гараар нэмсэн багц эх файлгүй байж болно.
+alter table menu_packages alter column file_url drop not null;
+
 -- Хурдан шүүлт хийх индексүүд
 create index if not exists idx_menu_price on menu_packages(price_per_person);
 create index if not exists idx_menu_restaurant on menu_packages(restaurant_id, is_verified);
