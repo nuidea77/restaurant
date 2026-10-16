@@ -3,11 +3,14 @@ import { z } from "zod";
 import { verifiedUserId } from "@/lib/guards";
 import { sql } from "@/lib/db";
 import { getOwnedRestaurant } from "@/lib/queries";
-import { readOwnUpload } from "@/lib/storage";
+import { isOwnBlobUrl } from "@/lib/blob";
+import { MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { extractMenuPackages } from "@/lib/vertex";
 
 // Олон хуудастай PDF-ийг Gemini уншихад хугацаа шаардана.
 export const maxDuration = 60;
+
+const MIME_BY_EXT: Record<string, string> = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg" };
 
 const Body = z.object({ url: z.string().min(1), restaurantId: z.string().min(1) });
 
@@ -22,8 +25,15 @@ export async function POST(request: Request) {
   const restaurant = await getOwnedRestaurant(restaurantId, userId);
   if (!restaurant) return NextResponse.json({ error: "Ресторан олдсонгүй" }, { status: 404 });
 
-  const file = await readOwnUpload(url, "menus", userId).catch(() => null);
-  if (!file) return NextResponse.json({ error: "Файл олдсонгүй" }, { status: 404 });
+  if (!isOwnBlobUrl(url, "menus", userId)) return NextResponse.json({ error: "Хандах эрхгүй файл" }, { status: 403 });
+  const mimeType = MIME_BY_EXT[new URL(url).pathname.split(".").pop()?.toLowerCase() ?? ""];
+  if (!mimeType) return NextResponse.json({ error: "Зөвшөөрөгдөөгүй файлын төрөл" }, { status: 400 });
+
+  const res = await fetch(url).catch(() => null);
+  if (!res?.ok) return NextResponse.json({ error: "Файл олдсонгүй" }, { status: 404 });
+  const data = Buffer.from(await res.arrayBuffer());
+  if (data.byteLength > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "Файл хэт том байна" }, { status: 400 });
+  const file = { data, mimeType };
 
   let packages;
   try {

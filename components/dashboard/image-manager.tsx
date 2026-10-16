@@ -7,7 +7,7 @@ import { IMAGE_MIME_TYPES } from "@/lib/constants";
 import { directUpload } from "@/lib/upload";
 import { buttonVariants } from "@/components/ui/button-variants";
 
-export function ImageManager({ restaurantId, images }: { restaurantId: string; images: string[] }) {
+export function ImageManager({ restaurantId, userId, images }: { restaurantId: string; userId: string; images: string[] }) {
   const [list, setList] = useState(images);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +25,7 @@ export function ImageManager({ restaurantId, images }: { restaurantId: string; i
     setError(null);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files)) urls.push(await directUpload(file, "images"));
+      for (const file of Array.from(files)) urls.push(await directUpload(file, "images", userId));
       await persist([...list, ...urls]);
     } catch (e) {
       setError((e as Error).message);

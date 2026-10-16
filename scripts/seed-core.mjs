@@ -5,7 +5,7 @@ import { DEMO_PASSWORD, DEMO_RESTAURANTS } from "./demo-data.mjs";
 /** Демо эзэмшигчийн утас: 80000001 … 80000010 (баталгаажсан, SMS илгээгдэхгүй). */
 export const demoPhone = (n) => String(80000000 + n);
 
-/** @param {import("@electric-sql/pglite").PGlite} db */
+/** @param {{ sql: (s: TemplateStringsArray, ...v: unknown[]) => Promise<{ rows: any[] }> }} db */
 export async function seedDemo(db, log = () => {}) {
   await db.sql`delete from users where email like '%@demo.mn'`;
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);

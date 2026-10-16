@@ -1,3 +1,6 @@
-import type { PGlite } from "@electric-sql/pglite";
+export type SeedDb = {
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+};
 
-export function seedDemo(db: PGlite, log?: (msg: string) => void): Promise<{ count: number; password: string }>;
+export const demoPhone: (n: number) => string;
+export function seedDemo(db: SeedDb, log?: (msg: string) => void): Promise<{ count: number; password: string }>;

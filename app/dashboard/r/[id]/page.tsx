@@ -90,7 +90,7 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
             <Card className="overflow-hidden">
               <CardBar icon={<Images />} title="Заал болон хоолны зураг" count={restaurant.images?.length ?? 0} />
               <div className="p-5">
-                <ImageManager restaurantId={restaurant.id} images={restaurant.images ?? []} />
+                <ImageManager restaurantId={restaurant.id} userId={userId} images={restaurant.images ?? []} />
               </div>
             </Card>
             <Card className="overflow-hidden">
@@ -100,7 +100,7 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
                   Цэсээ байршуулахад AI багц бүрийн нэр, үнэ, хүний тоо, 1 хүний үнийг гаргана. Та шалгаж
                   &quot;Баталгаажуулах&quot; дарсны дараа л нийтэд харагдана.
                 </p>
-                <MenuUploader restaurantId={restaurant.id} />
+                <MenuUploader restaurantId={restaurant.id} userId={userId} />
               </div>
             </Card>
           </div>
