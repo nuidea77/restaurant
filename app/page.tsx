@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Divider, Section } from "@/components/ui/frame";
 import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
-import { getSiteStats, searchRestaurants } from "@/lib/queries";
+import { getFeaturedRestaurants, getSiteStats, searchRestaurants } from "@/lib/queries";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
 
@@ -62,7 +62,10 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     amenities,
   };
 
-  const stats = await getSiteStats().catch(() => null);
+  const [stats, featured] = await Promise.all([
+    getSiteStats().catch(() => null),
+    getFeaturedRestaurants().catch(() => []),
+  ]);
 
   return (
     <>
@@ -102,6 +105,26 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
             Ресторанаа нэмэх <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
+              {featured.length >= 3 && (
+          <div className="mx-auto mt-12 grid max-w-5xl grid-cols-2 gap-3 lg:h-[420px] lg:grid-cols-4 lg:grid-rows-2">
+            {featured.slice(0, 5).map((f, i) => (
+              <Link
+                key={f.id}
+                href={`/restaurants/${f.id}`}
+                className={`group relative overflow-hidden rounded-2xl border bg-muted shadow-sm lg:aspect-auto ${
+                  i === 0 ? "col-span-2 aspect-[16/10] lg:row-span-2" : "aspect-[4/3]"
+                } ${i >= 3 ? "hidden lg:block" : ""}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={f.image} alt={f.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-90" />
+                <span className="absolute bottom-2 left-3 right-3 truncate text-left text-sm font-semibold text-white drop-shadow">
+                  {f.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Divider />

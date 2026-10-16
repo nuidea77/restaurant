@@ -90,3 +90,14 @@ export async function getSiteStats() {
     where r.is_paid`;
   return row;
 }
+
+/** Нүүр хуудасны коллажид — зурагтай, нийтлэгдсэн ресторанууд. */
+export function getFeaturedRestaurants(limit = 5) {
+  return sql<{ id: string; name: string; image: string; district: string; city: string }>`
+    select r.id, r.name, r.images[1] as image, r.district, r.city
+    from restaurants r
+    where r.is_paid and coalesce(array_length(r.images, 1), 0) > 0
+      and exists (select 1 from menu_packages p where p.restaurant_id = r.id and p.is_verified)
+    order by r.capacity desc
+    limit ${limit}`;
+}

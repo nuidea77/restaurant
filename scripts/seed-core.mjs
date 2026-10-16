@@ -15,7 +15,7 @@ export async function seedDemo(db, log = () => {}) {
     const [{ id: userId }] = (await db.sql`
       insert into users (email, phone, phone_verified_at, password_hash)
       values (${`demo${n}@demo.mn`}, ${demoPhone(n)}, now(), ${hash}) returning id`).rows;
-    const images = [`/demo/r${n}-1.svg`, `/demo/r${n}-2.svg`];
+    const images = [`/demo/r${n}-1.jpg`, `/demo/r${n}-2.jpg`];
     const [{ id: restaurantId }] = (await db.sql`
       insert into restaurants (owner_id, name, district, address, phone, capacity, description,
         has_host, has_stage, has_screen, has_parking, latitude, longitude, images, is_paid, paid_at)

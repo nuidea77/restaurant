@@ -14,6 +14,12 @@ const db = connect(url);
 await db.exec(await readFile(new URL("../db/schema.sql", import.meta.url), "utf8"));
 console.log("[migrate] Схем бэлэн");
 
+// Хуучин демо SVG зургуудыг бодит JPG зургаар солино (өмнө нь seed хийгдсэн өгөгдлийн санд).
+await db.sql`
+  update restaurants
+  set images = array(select regexp_replace(x, '^/demo/(r[0-9]+-[12])\\.svg$', '/demo/\\1.jpg') from unnest(images) x)
+  where images::text ~ '/demo/r[0-9]+-[12]\\.svg'`;
+
 if (process.env.DEMO_DATA !== "false") {
   const { rows } = await db.sql`select count(*)::int as n from restaurants`;
   if (rows[0].n === 0) {

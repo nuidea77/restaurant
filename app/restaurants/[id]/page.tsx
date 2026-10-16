@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, Check, MapPin, Navigation, Phone, Users, UtensilsCrossed } from "lucide-react";
 import { Gallery, SourceFiles } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
 import { AMENITIES, UB } from "@/lib/constants";
@@ -51,47 +50,68 @@ export default async function RestaurantPage({ params }: { params: Params }) {
 
   return (
     <>
-      <Section className="hero-glow pb-8">
-        <Link href="/#results" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Бүх ресторан
-        </Link>
-        <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-1.5">
-              {AMENITIES.filter((a) => r[a.key]).map((a) => (
-                <Badge key={a.key} variant="outline" className="bg-card">
-                  <Check className="h-3 w-3 text-brand" /> {a.label}
-                </Badge>
-              ))}
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">{r.name}</h1>
-            <div className="flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" /> {r.city === UB ? "" : `${r.city}, `}{r.district}, {r.address}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Users className="h-4 w-4" /> {r.capacity} хүний багтаамж
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {cheapest != null && (
-              <div className="rounded-xl border bg-card px-4 py-2 shadow-sm">
-                <p className="text-xs text-muted-foreground">1 хүнд</p>
-                <p className="text-lg font-bold text-brand">{formatMNT(cheapest)}-өөс</p>
+      {/* Cover зурагтай дээд хэсэг */}
+      <section className="relative isolate overflow-hidden">
+        {r.images[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={r.images[0]} alt={r.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        ) : (
+          <div className="hero-glow absolute inset-0 -z-10" />
+        )}
+        {r.images[0] && <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />}
+        <div className={`px-4 pb-8 pt-6 sm:px-8 ${r.images[0] ? "text-white" : ""}`}>
+          <Link
+            href="/#results"
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm backdrop-blur ${
+              r.images[0] ? "bg-white/15 text-white hover:bg-white/25" : "bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ArrowLeft className="h-4 w-4" /> Бүх ресторан
+          </Link>
+          <div className="mt-24 flex flex-wrap items-end justify-between gap-6 sm:mt-40">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-1.5">
+                {AMENITIES.filter((a) => r[a.key]).map((a) => (
+                  <span
+                    key={a.key}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium backdrop-blur ${
+                      r.images[0] ? "bg-white/15 text-white" : "border bg-card"
+                    }`}
+                  >
+                    <Check className="h-3 w-3" /> {a.label}
+                  </span>
+                ))}
               </div>
-            )}
-            <a href={`tel:${r.phone.replace(/\s/g, "")}`} className={buttonVariants({ size: "lg" })}>
-              <Phone className="h-4 w-4" /> Залгах
-            </a>
+              <h1 className="text-3xl font-extrabold tracking-[-0.03em] drop-shadow sm:text-5xl">{r.name}</h1>
+              <div className={`flex flex-wrap gap-x-5 gap-y-1 ${r.images[0] ? "text-white/85" : "text-muted-foreground"}`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" /> {r.city === UB ? "" : `${r.city}, `}
+                  {r.district}, {r.address}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Users className="h-4 w-4" /> {r.capacity} хүний багтаамж
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {cheapest != null && (
+                <div className="rounded-xl bg-white px-4 py-2 text-foreground shadow-lg">
+                  <p className="text-xs text-muted-foreground">1 хүнд</p>
+                  <p className="text-lg font-bold text-primary">{formatMNT(cheapest)}-өөс</p>
+                </div>
+              )}
+              <a href={`tel:${r.phone.replace(/\s/g, "")}`} className={buttonVariants({ size: "lg", className: "shadow-lg" })}>
+                <Phone className="h-4 w-4" /> Залгах
+              </a>
+            </div>
           </div>
         </div>
-        {r.description && <p className="mt-6 max-w-3xl whitespace-pre-line text-foreground/75">{r.description}</p>}
-      </Section>
+      </section>
 
-      {r.images.length > 0 && (
-        <Section className="pt-0">
-          <Gallery images={r.images} name={r.name} />
+      {(r.description || r.images.length > 1) && (
+        <Section className="space-y-6">
+          {r.description && <p className="max-w-3xl whitespace-pre-line text-lg text-foreground/80">{r.description}</p>}
+          {r.images.length > 1 && <Gallery images={r.images} name={r.name} />}
         </Section>
       )}
 

@@ -86,7 +86,7 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
 export async function setImages(restaurantId: string, images: string[]): Promise<ActionResult> {
   const userId = await requireUser();
   // /demo/ — seed скриптийн демо зургууд.
-  const allowed = (url: string) => isOwnBlobUrl(url, "images", userId) || /^\/demo\/[\w-]+\.svg$/.test(url);
+  const allowed = (url: string) => isOwnBlobUrl(url, "images", userId) || /^\/demo\/[\w-]+\.(svg|jpg)$/.test(url);
   if (!images.every(allowed)) return { ok: false, error: "Буруу зургийн холбоос" };
 
   const rows = await sql`

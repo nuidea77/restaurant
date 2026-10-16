@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Loader2, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -32,6 +32,13 @@ export function Filters({ initial }: { initial: FilterValues }) {
   const [budget, setBudget] = useState<number[]>([initial.minPrice, initial.maxPrice]);
   const [pending, startTransition] = useTransition();
   const [city, setCity] = useState(initial.city ?? "");
+  // Гар утсанд шүүлтүүр анхнаасаа хураагдсан байна (жагсаалтыг доош түлхэхгүй).
+  // Шүүлтүүр сонгосны дараа (URL өөрчлөгдөж дахин үүсэхэд) нээлттэй хэвээр үлдэнэ.
+  const [open, setOpen] = useState(
+    Boolean(initial.city || initial.district || initial.capacity || initial.amenities.length) ||
+      initial.minPrice > BUDGET_MIN ||
+      initial.maxPrice < BUDGET_MAX,
+  );
 
   const activeCount =
     (initial.city ? 1 : 0) +
@@ -54,11 +61,24 @@ export function Filters({ initial }: { initial: FilterValues }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardBar
-        icon={pending ? <Loader2 className="animate-spin" /> : <SlidersHorizontal />}
-        title={pending ? "Хайж байна..." : "Шүүлтүүр"}
-        count={activeCount}
-      />
+      <button
+        type="button"
+        className="block w-full text-left lg:pointer-events-none"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <CardBar
+          className={open ? "" : "border-b-0 lg:border-b"}
+          icon={pending ? <Loader2 className="animate-spin" /> : <SlidersHorizontal />}
+          title={
+            <span className="flex items-center gap-1.5">
+              {pending ? "Хайж байна..." : "Шүүлтүүр"}
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform lg:hidden ${open ? "rotate-180" : ""}`} />
+            </span>
+          }
+          count={activeCount}
+        />
+      </button>
       <form
         ref={formRef}
         method="get"
@@ -68,7 +88,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
           e.preventDefault();
           apply();
         }}
-        className="space-y-6 p-4"
+        className={`space-y-6 p-4 ${open ? "block" : "hidden"} lg:block`}
       >
         <div className="space-y-2">
           <Label htmlFor="city">Хот / аймаг</Label>
