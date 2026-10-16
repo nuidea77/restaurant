@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { DISTRICTS } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
-import { currentUserId } from "@/auth";
+import { verifiedUserId } from "@/lib/guards";
 import { sql } from "@/lib/db";
 import { appOrigin } from "@/lib/origin";
 import { confirmDemoPayment, startBylCheckout } from "@/lib/payments";
@@ -14,8 +14,9 @@ import { isOwnUploadUrl } from "@/lib/upload-path";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 async function requireUser() {
-  const userId = await currentUserId();
-  if (!userId) throw new Error("Нэвтэрнэ үү");
+  // Утас баталгаажаагүй хэрэглэгч ресторан нэмж, засах боломжгүй.
+  const userId = await verifiedUserId();
+  if (!userId) throw new Error("Нэвтэрч, утсаа баталгаажуулна уу");
   return userId;
 }
 

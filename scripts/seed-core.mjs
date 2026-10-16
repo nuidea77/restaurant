@@ -2,6 +2,9 @@
 import bcrypt from "bcryptjs";
 import { DEMO_PASSWORD, DEMO_RESTAURANTS } from "./demo-data.mjs";
 
+/** Демо эзэмшигчийн утас: 80000001 … 80000010 (баталгаажсан, SMS илгээгдэхгүй). */
+export const demoPhone = (n) => String(80000000 + n);
+
 /** @param {import("@electric-sql/pglite").PGlite} db */
 export async function seedDemo(db, log = () => {}) {
   await db.sql`delete from users where email like '%@demo.mn'`;
@@ -10,7 +13,8 @@ export async function seedDemo(db, log = () => {}) {
   for (const [i, r] of DEMO_RESTAURANTS.entries()) {
     const n = i + 1;
     const [{ id: userId }] = (await db.sql`
-      insert into users (email, password_hash) values (${`demo${n}@demo.mn`}, ${hash}) returning id`).rows;
+      insert into users (email, phone, phone_verified_at, password_hash)
+      values (${`demo${n}@demo.mn`}, ${demoPhone(n)}, now(), ${hash}) returning id`).rows;
     const images = [`/demo/r${n}-1.svg`, `/demo/r${n}-2.svg`];
     const [{ id: restaurantId }] = (await db.sql`
       insert into restaurants (owner_id, name, district, address, phone, capacity, description,
@@ -25,7 +29,7 @@ export async function seedDemo(db, log = () => {}) {
         insert into menu_packages (restaurant_id, package_name, file_url, total_price, person_count, price_per_person, items, is_verified)
         values (${restaurantId}, ${p.name}, ${`/demo/r${n}-menu.svg`}, ${p.total}, ${p.count}, 0, ${JSON.stringify(p.items)}::jsonb, true)`;
     }
-    log(`✓ ${r.name} (${r.packages.length} багц) — нэвтрэх: demo${n}@demo.mn`);
+    log(`✓ ${r.name} (${r.packages.length} багц) — нэвтрэх: ${demoPhone(n)}`);
   }
   return { count: DEMO_RESTAURANTS.length, password: DEMO_PASSWORD };
 }

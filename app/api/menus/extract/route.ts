@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { currentUserId } from "@/auth";
+import { verifiedUserId } from "@/lib/guards";
 import { sql } from "@/lib/db";
 import { getOwnedRestaurant } from "@/lib/queries";
 import { readOwnUpload } from "@/lib/storage";
@@ -12,7 +12,7 @@ export const maxDuration = 60;
 const Body = z.object({ url: z.string().min(1), restaurantId: z.string().min(1) });
 
 export async function POST(request: Request) {
-  const userId = await currentUserId();
+  const userId = await verifiedUserId();
   if (!userId) return NextResponse.json({ error: "Нэвтэрнэ үү" }, { status: 401 });
 
   const parsed = Body.safeParse(await request.json().catch(() => null));

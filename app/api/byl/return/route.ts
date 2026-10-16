@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { currentUserId } from "@/auth";
+import { verifiedUserId } from "@/lib/guards";
 import { syncBylPayment } from "@/lib/payments";
 
 /** Byl-ийн success_url болон "Төлбөр шалгах" — Byl-ээс төлөвийг асууж баталгаажуулаад буцаана. */
 export async function GET(request: NextRequest) {
-  const userId = await currentUserId();
+  const userId = await verifiedUserId();
   if (!userId) return NextResponse.redirect(new URL("/login", request.url));
 
   const paymentId = request.nextUrl.searchParams.get("payment") ?? "";

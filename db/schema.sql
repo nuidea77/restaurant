@@ -96,3 +96,25 @@ create index if not exists idx_payments_restaurant on payments(restaurant_id, st
 alter table payments add column if not exists byl_checkout_id bigint;
 alter table payments add column if not exists byl_checkout_url text;
 create unique index if not exists idx_payments_byl_checkout on payments(byl_checkout_id) where byl_checkout_id is not null;
+
+-- ---------------------------------------------------------------------------
+-- Утасны дугаараар бүртгэл + verify.mn баталгаажуулалт
+-- ---------------------------------------------------------------------------
+alter table users alter column email drop not null;
+alter table users add column if not exists phone varchar(16);
+alter table users add column if not exists phone_verified_at timestamp with time zone;
+create unique index if not exists idx_users_phone on users(phone) where phone is not null;
+
+create table if not exists phone_verifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  phone varchar(16) not null,
+  session_id varchar(64) not null unique,
+  code varchar(16) not null,
+  instruction text,
+  sms_uri text,
+  status varchar(16) not null default 'PENDING' check (status in ('PENDING', 'VERIFIED', 'EXPIRED')),
+  expires_at timestamp with time zone not null,
+  created_at timestamp with time zone default now()
+);
+create index if not exists idx_phone_verifications_user on phone_verifications(user_id, created_at desc);

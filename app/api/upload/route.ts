@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { currentUserId } from "@/auth";
+import { verifiedUserId } from "@/lib/guards";
 import { MAX_UPLOAD_BYTES, UPLOAD_FOLDERS, type UploadFolder } from "@/lib/constants";
 import { saveUpload } from "@/lib/storage";
 
 /** Цэс болон зургийг локал data/uploads хавтаст хадгална. */
 export async function POST(request: Request) {
-  const userId = await currentUserId();
+  const userId = await verifiedUserId();
   if (!userId) return NextResponse.json({ error: "Нэвтэрнэ үү" }, { status: 401 });
 
   const form = await request.formData().catch(() => null);

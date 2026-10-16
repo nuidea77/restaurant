@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sql } from "@/lib/db";
 import { authSecret } from "@/lib/env";
+import { normalizePhone } from "@/lib/phone";
 
 declare module "next-auth" {
   interface Session {
@@ -11,7 +12,8 @@ declare module "next-auth" {
   }
 }
 
-const Credentials_ = z.object({ email: z.email(), password: z.string().min(8) });
+// login: утасны дугаар (үндсэн) эсвэл хуучин бүртгэлийн имэйл.
+const Credentials_ = z.object({ login: z.string().min(1), password: z.string().min(8) });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Vercel болон `next start` дээр Host header-ийг итгэмжлэнэ (UntrustedHost алдаанаас сэргийлнэ).
@@ -21,15 +23,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
   providers: [
     Credentials({
-      credentials: { email: {}, password: {} },
+      credentials: { login: {}, password: {} },
       async authorize(raw) {
         const parsed = Credentials_.safeParse(raw);
         if (!parsed.success) return null;
-        const email = parsed.data.email.toLowerCase();
-        const [user] = await sql<{ id: string; email: string; password_hash: string }>`
-          select id, email, password_hash from users where email = ${email}`;
+        const login = parsed.data.login.trim();
+        const phone = login.includes("@") ? null : normalizePhone(login);
+        if (!phone && !login.includes("@")) return null;
+        const [user] = phone
+          ? await sql<{ id: string; password_hash: string }>`select id, password_hash from users where phone = ${phone}`
+          : await sql<{ id: string; password_hash: string }>`
+              select id, password_hash from users where email = ${login.toLowerCase()}`;
         if (!user || !(await bcrypt.compare(parsed.data.password, user.password_hash))) return null;
-        return { id: user.id, email: user.email };
+        return { id: user.id };
       },
     }),
   ],
