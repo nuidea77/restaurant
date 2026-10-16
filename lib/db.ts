@@ -2,6 +2,7 @@ import "server-only";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
+import { seedDemo } from "@/scripts/seed-core.mjs";
 
 /** Бүх локал өгөгдөл (DB, байршуулсан файл) энд хадгалагдана. */
 export const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
@@ -19,6 +20,11 @@ function getDb() {
         mkdirSync(dir, { recursive: true });
         const db = await PGlite.create(dir);
         await db.exec(readFileSync(path.join(process.cwd(), "db", "schema.sql"), "utf8"));
+        // Анх асаахад (ресторан нэг ч байхгүй үед) демо өгөгдөл оруулна. DEMO_DATA=false бол алгасна.
+        if (process.env.DEMO_DATA !== "false") {
+          const { rows } = await db.query<{ n: number }>("select count(*)::int as n from restaurants");
+          if (rows[0].n === 0) await seedDemo(db);
+        }
         return db;
       })(),
     };
