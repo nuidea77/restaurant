@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Check, MapPin, Navigation, Phone, Users, UtensilsCrossed } from "lucide-react";
-import { Gallery, SourceFiles } from "@/components/gallery";
+import { Gallery } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
@@ -38,7 +38,6 @@ export default async function RestaurantPage({ params }: { params: Params }) {
   if (!data) notFound();
   const { restaurant: r, packages } = data;
 
-  const sourceFiles = [...new Set(packages.map((p) => p.file_url))];
   const mapQuery = r.latitude != null && r.longitude != null ? `${r.latitude},${r.longitude}` : `${r.address}, ${r.district}, ${r.city}`;
   // Түлхүүртэй бол Google Maps Embed API (албан ёсны), үгүй бол түлхүүргүй embed.
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -146,7 +145,6 @@ export default async function RestaurantPage({ params }: { params: Params }) {
             <h2 className="text-2xl font-bold tracking-tight">Шинэ жилийн багцууд</h2>
             <p className="mt-1 text-muted-foreground">Үнийг 1 хүнд ногдохоор тооцсон. Ширээний багцыг хүний тоонд хуваасан.</p>
           </div>
-          <SourceFiles urls={sourceFiles} />
         </div>
         {packages.length === 0 && <p className="text-muted-foreground">Баталгаажсан багц одоогоор алга.</p>}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
