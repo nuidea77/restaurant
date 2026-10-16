@@ -24,9 +24,6 @@ export default async function DashboardPage() {
           <div>
             <p className="text-sm text-muted-foreground">Эзэмшигчийн самбар</p>
             <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Миний ресторанууд</h1>
-            <p className="mt-2 text-muted-foreground">
-              Хэдэн ч ресторан нэмж болно. Ресторан бүрийг нийтлэх төлбөр — {formatMNT(LISTING_FEE)}.
-            </p>
           </div>
           <Link href="/dashboard/new" className={buttonVariants({ size: "lg" })}>
             <Plus className="h-4 w-4" /> Ресторан нэмэх

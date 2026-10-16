@@ -154,12 +154,11 @@ function PickerShell({ city, initial, MapView, geocode }: Props & { MapView: Map
         </ul>
       )}
       <MapView center={view.center} zoom={view.zoom} position={position} onPick={(lat, lng) => pick(lat, lng)} />
-      <p className="text-xs text-muted-foreground">
-        {message ??
-          (position
-            ? `Сонгосон байршил: ${position[0]}, ${position[1]} — цэгийг чирж засаж болно.`
-            : "Газрын зураг дээр дарж рестораны байршлыг тэмдэглэнэ үү.")}
-      </p>
+      {(message || !position) && (
+        <p className="text-xs text-muted-foreground">
+          {message ?? "Газрын зураг дээр дарж рестораны байршлыг тэмдэглэнэ үү."}
+        </p>
+      )}
       <input type="hidden" name="latitude" value={position?.[0] ?? ""} />
       <input type="hidden" name="longitude" value={position?.[1] ?? ""} />
     </div>
