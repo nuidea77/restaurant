@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { setImages } from "@/app/dashboard/actions";
 import { IMAGE_MIME_TYPES } from "@/lib/constants";
 import { directUpload } from "@/lib/upload";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 export function ImageManager({ images }: { images: string[] }) {
   const [list, setList] = useState(images);
@@ -39,7 +40,7 @@ export function ImageManager({ images }: { images: string[] }) {
         {list.map((url) => (
           <div key={url} className="relative aspect-square">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="" className="h-full w-full rounded-md object-cover" />
+            <img src={url} alt="" className="h-full w-full rounded-lg border object-cover" />
             <button
               className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
               onClick={() => startTransition(() => persist(list.filter((u) => u !== url)))}
@@ -50,7 +51,7 @@ export function ImageManager({ images }: { images: string[] }) {
           </div>
         ))}
       </div>
-      <label className="inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm hover:bg-muted">
+      <label className={buttonVariants({ variant: "outline", className: "cursor-pointer" })}>
         {busy ? "Байршуулж байна..." : "+ Зураг нэмэх"}
         <input
           type="file"

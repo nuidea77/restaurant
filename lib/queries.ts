@@ -59,3 +59,15 @@ export function getPackages(restaurantId: string, verifiedOnly: boolean) {
     where restaurant_id = ${restaurantId} and (${!verifiedOnly} or is_verified)
     order by is_verified asc, price_per_person asc, created_at desc`;
 }
+
+/** Hero хэсгийн тоон үзүүлэлт — зөвхөн баталгаажсан багцтай ресторанууд. */
+export async function getSiteStats() {
+  const [row] = await sql<{ restaurants: number; packages: number; districts: number; min_price: number | null }>`
+    select count(distinct r.id)::int as restaurants,
+           count(p.id)::int as packages,
+           count(distinct r.district)::int as districts,
+           min(p.price_per_person)::float8 as min_price
+    from restaurants r
+    join menu_packages p on p.restaurant_id = r.id and p.is_verified`;
+  return row;
+}

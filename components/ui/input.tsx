@@ -1,42 +1,22 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+// UIAble компонент — https://uiable.com/r/input.json (shadcn registry)
+import { ComponentProps } from "react"
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+// third-party
+import { Input as InputPrimitive } from "@base-ui/react/input"
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: ComponentProps<"input">) {
   return (
-    <input
+    <InputPrimitive
+      type={type}
+      data-slot="input"
       className={cn(
-        "flex h-10 w-full rounded-md border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
-        className,
+        "disabled:bg-secondary-200/10 block w-full rounded-lg border border-border bg-input px-3 py-[.8rem] text-base placeholder:text-[#bec8d0] focus:border-primary focus:outline-none disabled:pointer-events-none dark:focus:border-primary",
+        className
       )}
       {...props}
     />
-  );
+  )
 }
 
-export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={cn(
-        "flex min-h-20 w-full rounded-md border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function Select({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select
-      className={cn(
-        "flex h-10 w-full rounded-md border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("text-sm font-medium leading-none", className)} {...props} />;
-}
+export { Input }

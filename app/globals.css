@@ -1,39 +1,82 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0.02 260);
-  --card: oklch(1 0 0);
-  --muted: oklch(0.96 0.005 260);
-  --muted-foreground: oklch(0.5 0.02 260);
-  --border: oklch(0.91 0.005 260);
-  --primary: oklch(0.45 0.16 25);
-  --primary-foreground: oklch(0.98 0 0);
-  --accent: oklch(0.95 0.03 85);
-  --destructive: oklch(0.58 0.22 27);
-  --ring: oklch(0.45 0.16 25);
+  /* UIAble үндсэн theme (https://uiable.com) */
+  --background: #f3f4f6;
+  --foreground: #030712;
+  --card: #ffffff;
+  --card-foreground: #030712;
+  --primary: #4680ff;
+  --primary-600: #2f6bf0;
+  --primary-foreground: #f9fafb;
+  --primary-soft: #eef3ff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #030712;
+  --secondary-200: #e5e7eb;
+  --muted: #f3f4f6;
+  --muted-foreground: #6a7282;
+  --accent: #f9fafb;
+  --accent-foreground: #101828;
+  --destructive: #e7000b;
+  --border: #e5e7eb;
+  --input: #ffffff;
+  --ring: #4680ff;
+  --radius: 0.5rem;
 }
 
 @theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-600: var(--primary-600);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-200: var(--secondary-200);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-lg: 0.75rem;
+  /* Төслийн өмнөх нэрс — primary-тай ижил */
+  --color-brand: var(--primary);
+  --color-brand-soft: var(--primary-soft);
+}
+
+/* UIAble CardTitle-ийн "h5" класс */
+.h5 {
+  font-size: 1rem;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-feature-settings: "cv11", "ss01";
 }
 
 * {
   border-color: var(--border);
+}
+
+/* Hero-ийн зөөлөн цацраг дэвсгэр */
+.hero-glow {
+  background:
+    radial-gradient(60% 70% at 50% 0%, rgb(70 128 255 / 0.14), transparent 70%),
+    repeating-radial-gradient(circle at 50% 0%, transparent 0 38px, rgb(3 7 18 / 0.025) 38px 39px);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #4680ff, #2f6bf0 60%, #6d9bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

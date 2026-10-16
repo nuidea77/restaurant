@@ -4,8 +4,11 @@ import { useState, useTransition } from "react";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import { deletePackage, updatePackage } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
-import { Badge, Card, CardContent } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { pricePerPerson } from "@/lib/pricing";
 import type { MenuPackage } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
@@ -42,7 +45,7 @@ export function PackageReview({ pkg }: { pkg: MenuPackage }) {
   }
 
   return (
-    <Card className={pkg.is_verified ? "" : "border-amber-400"}>
+    <Card className={pkg.is_verified ? "" : "border-amber-300 ring-4 ring-amber-50"}>
       <CardContent className="space-y-4 pt-5">
         <div className="flex items-center justify-between gap-2">
           {pkg.is_verified ? (
@@ -72,7 +75,7 @@ export function PackageReview({ pkg }: { pkg: MenuPackage }) {
           </div>
         </div>
         <p className="text-sm">
-          1 хүний үнэ: <span className="font-semibold text-primary">{formatMNT(perPerson)}</span>
+          1 хүний үнэ: <span className="font-semibold text-brand">{formatMNT(perPerson)}</span>
         </p>
         <div className="space-y-2">
           <Label>Багтсан бүтээгдэхүүн (мөр бүрт нэг)</Label>

@@ -1,32 +1,27 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+"use client"
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        outline: "border bg-card hover:bg-muted",
-        ghost: "hover:bg-muted",
-        destructive: "bg-destructive text-white hover:bg-destructive/90",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 px-3",
-        lg: "h-11 px-6",
-        icon: "h-9 w-9",
-      },
-    },
-    defaultVariants: { variant: "default", size: "default" },
-  },
-);
+// UIAble компонент — https://uiable.com/r/button.json (shadcn registry)
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+// third-party
+import { Button as ButtonPrimitive } from "@base-ui/react/button"
+import { type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "./button-variants"
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+// types
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
 }
 
-export { buttonVariants };
+export { Button, buttonVariants }

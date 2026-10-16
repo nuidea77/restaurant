@@ -43,9 +43,9 @@ export function MenuUploader() {
   return (
     <div className="space-y-3">
       <label
-        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center hover:bg-muted ${busy ? "pointer-events-none opacity-60" : ""}`}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-accent p-8 text-center transition-colors hover:border-brand hover:bg-brand-soft ${busy ? "pointer-events-none opacity-60" : ""}`}
       >
-        <Upload className="h-8 w-8 text-muted-foreground" />
+        <span className="grid h-11 w-11 place-items-center rounded-lg border bg-card shadow-sm"><Upload className="h-5 w-5 text-brand" /></span>
         <span className="font-medium">
           {stage === "uploading" ? "Байршуулж байна..." : stage === "extracting" ? "AI цэсийг уншиж байна (1 мин хүртэл)..." : "Цэс байршуулах"}
         </span>

@@ -3,20 +3,26 @@
 import { useActionState, useState } from "react";
 import { authenticate } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [state, action, pending] = useActionState(authenticate, null);
 
   return (
-    <div className="mx-auto max-w-sm py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>{mode === "signin" ? "Ресторан эзэмшигч нэвтрэх" : "Ресторан бүртгүүлэх"}</CardTitle>
+    <div className="hero-glow flex min-h-[70vh] items-center justify-center px-4 py-16">
+      <Card className="w-full max-w-sm shadow-xl shadow-black/5">
+        <CardHeader className="items-center pt-8 text-center">
+          <Logo />
+          <CardTitle className="mt-4 text-xl">{mode === "signin" ? "Ресторан эзэмшигч нэвтрэх" : "Ресторан бүртгүүлэх"}</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {mode === "signin" ? "Цэс, багцаа удирдахын тулд нэвтэрнэ үү." : "Рестораныхаа Шинэ жилийн цэсийг нийтлээрэй."}
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <form action={action} className="space-y-4">
             <input type="hidden" name="mode" value={mode} />
             <div className="space-y-2">

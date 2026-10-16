@@ -3,7 +3,10 @@
 import { useActionState } from "react";
 import { saveProfile } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect as Select } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { AMENITIES, DISTRICTS } from "@/lib/constants";
 import type { Restaurant } from "@/lib/types";
 
@@ -19,7 +22,7 @@ export function ProfileForm({ restaurant }: { restaurant: Restaurant | null }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="district">Дүүрэг</Label>
-        <Select id="district" name="district" defaultValue={r?.district ?? ""} required>
+        <Select className="w-full" id="district" name="district" defaultValue={r?.district ?? ""} required>
           <option value="" disabled>
             Сонгох
           </option>
