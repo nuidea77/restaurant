@@ -15,10 +15,13 @@ export async function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
         <div className="flex min-w-0 items-center gap-4 sm:gap-8">
           <Logo />
-          <nav className="flex items-center gap-6 text-sm font-medium text-foreground/80">
+          <nav className="flex items-center gap-4 text-sm sm:gap-6 font-medium text-foreground/80">
             <SectionLink section="results" className="hover:text-foreground">
-              Ресторанууд
+              Газрууд
             </SectionLink>
+            <Link href="/events" className="hover:text-foreground">
+              Эвентүүд
+            </Link>
             <SectionLink section="how" className="hidden hover:text-foreground md:inline">
               Хэрхэн ажилладаг
             </SectionLink>
@@ -28,7 +31,7 @@ export async function SiteHeader() {
           {user ? (
             <>
               <Link href="/dashboard" className={buttonVariants({ variant: "dark", size: "sm" })}>
-                Миний ресторанууд
+                Миний газрууд
               </Link>
               <form action={logout}>
                 <button className={buttonVariants({ variant: "outline", size: "sm" })}>Гарах</button>
@@ -40,7 +43,7 @@ export async function SiteHeader() {
                 Нэвтрэх
               </Link>
               <Link href="/dashboard/new" className={buttonVariants({ variant: "dark", size: "sm", className: "hidden sm:inline-flex" })}>
-                Ресторан нэмэх
+                Газар нэмэх
               </Link>
             </>
           )}

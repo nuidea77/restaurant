@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { VenueIcon } from "@/components/venue-icon";
+import { venueTypeLabel } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { ArrowUpRight, CreditCard, Plus, Store, Users } from "lucide-react";
 import { currentUserId } from "@/auth";
@@ -21,10 +23,10 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Эзэмшигчийн самбар</p>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Миний ресторанууд</h1>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Миний газрууд</h1>
           </div>
           <Link href="/dashboard/new" className={buttonVariants({ size: "lg" })}>
-            <Plus className="h-4 w-4" /> Ресторан нэмэх
+            <Plus className="h-4 w-4" /> Газар нэмэх
           </Link>
         </div>
         {restaurants.length > 0 && (
@@ -45,12 +47,12 @@ export default async function DashboardPage() {
               <EmptyMedia variant="icon">
                 <Store />
               </EmptyMedia>
-              <EmptyTitle>Одоогоор ресторан алга</EmptyTitle>
-              <EmptyDescription>Эхний рестораныхаа мэдээллийг оруулна уу.</EmptyDescription>
+              <EmptyTitle>Одоогоор газар алга</EmptyTitle>
+              <EmptyDescription>Эхний газрынхаа (ресторан, лаунж, хаус, амралтын газар) мэдээллийг оруулна уу.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Link href="/dashboard/new" className={buttonVariants({})}>
-                <Plus className="h-4 w-4" /> Ресторан нэмэх
+                <Plus className="h-4 w-4" /> Газар нэмэх
               </Link>
             </EmptyContent>
           </Empty>
@@ -59,8 +61,10 @@ export default async function DashboardPage() {
             {restaurants.map((r) => (
               <div key={r.id} className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
                 <div className="flex items-center gap-2 border-b px-4 py-3 text-sm font-medium">
-                  <Store className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 truncate">{r.district}</span>
+                  <VenueIcon type={r.venue_type} className="h-4 w-4 text-muted-foreground" />
+                  <span className="flex-1 truncate">
+                    {venueTypeLabel(r.venue_type)} · {r.district}
+                  </span>
                   {r.is_paid ? (
                     <Badge className="border-green-200 bg-green-50 text-green-700">Идэвхтэй</Badge>
                   ) : (

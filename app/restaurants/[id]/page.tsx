@@ -6,12 +6,14 @@ import { Gallery } from "@/components/gallery";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
-import { AMENITIES, UB } from "@/lib/constants";
-import { getPackages, getRestaurant } from "@/lib/queries";
+import { AMENITIES, UB, venueTypeLabel } from "@/lib/constants";
+import { getPackages, getRestaurant, getVenueEvents } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
 import { AmenityIcon } from "@/components/amenity-icon";
 import { Availability } from "@/components/availability";
-import { isValidISODate } from "@/lib/dates";
+import { isValidISODate, todayISO } from "@/lib/dates";
+import { EventCard } from "@/components/event-card";
+import { VenueIcon } from "@/components/venue-icon";
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -20,8 +22,8 @@ async function load(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const restaurant = await getRestaurant(id);
   if (!restaurant) return null;
-  const packages = await getPackages(id, true);
-  return { restaurant, packages };
+  const [packages, events] = await Promise.all([getPackages(id, true), getVenueEvents(id, todayISO())]);
+  return { restaurant, packages, events };
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
@@ -41,7 +43,7 @@ export default async function RestaurantPage({ params, searchParams }: { params:
   const qd = (await searchParams).date;
   const date = typeof qd === "string" && isValidISODate(qd) ? qd : undefined;
   if (!data) notFound();
-  const { restaurant: r, packages } = data;
+  const { restaurant: r, packages, events } = data;
 
   const mapQuery = r.latitude != null && r.longitude != null ? `${r.latitude},${r.longitude}` : `${r.address}, ${r.district}, ${r.city}`;
   // Түлхүүртэй бол Google Maps Embed API (албан ёсны), үгүй бол түлхүүргүй embed.
@@ -71,11 +73,18 @@ export default async function RestaurantPage({ params, searchParams }: { params:
               r.images[0] ? "bg-white/15 text-white hover:bg-white/25" : "bg-card text-muted-foreground hover:text-foreground"
             }`}
           >
-            <ArrowLeft className="h-4 w-4" /> Бүх ресторан
+            <ArrowLeft className="h-4 w-4" /> Бүх газар
           </Link>
           <div className="mt-24 flex flex-wrap items-end justify-between gap-6 sm:mt-40">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    r.images[0] ? "bg-white text-foreground" : "bg-primary text-white"
+                  }`}
+                >
+                  <VenueIcon type={r.venue_type} className="h-3.5 w-3.5" /> {venueTypeLabel(r.venue_type)}
+                </span>
                 {AMENITIES.filter((a) => r[a.key]).map((a) => (
                   <span
                     key={a.key}
@@ -181,6 +190,26 @@ export default async function RestaurantPage({ params, searchParams }: { params:
       </Section>
 
       <Divider />
+
+      {events.length > 0 && (
+        <>
+          <Section id="events" className="scroll-mt-16">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold tracking-tight">Шинэ жилийн эвентүүд</h2>
+              <p className="mt-1 text-muted-foreground">{r.name}-д болох тоглолт, үдэшлэгүүд.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((e) => (
+                <EventCard
+                  key={e.id}
+                  e={{ ...e, venue_name: r.name, venue_type: r.venue_type, city: r.city, district: r.district, phone: r.phone, cover: r.images[0] ?? null }}
+                />
+              ))}
+            </div>
+          </Section>
+          <Divider />
+        </>
+      )}
 
       <Section id="dates" className="scroll-mt-16">
         <Card className="overflow-hidden">

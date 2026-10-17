@@ -91,7 +91,7 @@ export async function startBylCheckout(paymentId: string, ownerId: string, origi
 
   const checkout = await createCheckout({
     amount: p.amount,
-    name: `Ресторан нийтлэх: ${p.restaurant_name}`,
+    name: `Газар нийтлэх: ${p.restaurant_name}`,
     reference: p.reference,
     successUrl: `${origin}/api/byl/return?payment=${p.id}`,
     cancelUrl: `${origin}/dashboard/r/${p.restaurant_id}/pay`,

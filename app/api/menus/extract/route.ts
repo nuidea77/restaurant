@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const { url, restaurantId } = parsed.data;
 
   const restaurant = await getOwnedRestaurant(restaurantId, userId);
-  if (!restaurant) return NextResponse.json({ error: "Ресторан олдсонгүй" }, { status: 404 });
+  if (!restaurant) return NextResponse.json({ error: "Газар олдсонгүй" }, { status: 404 });
 
   if (!isOwnBlobUrl(url, "menus", userId)) return NextResponse.json({ error: "Хандах эрхгүй файл" }, { status: 403 });
   const mimeType = MIME_BY_EXT[new URL(url).pathname.split(".").pop()?.toLowerCase() ?? ""];

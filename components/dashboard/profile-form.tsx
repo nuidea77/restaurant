@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { AMENITIES, CITIES, DISTRICTS, IMAGE_MIME_TYPES, LISTING_FEE, MAX_UPLOAD_BYTES, MENU_MIME_TYPES, UB } from "@/lib/constants";
+import { AMENITIES, VENUE_TYPES, CITIES, DISTRICTS, IMAGE_MIME_TYPES, LISTING_FEE, MAX_UPLOAD_BYTES, MENU_MIME_TYPES, UB } from "@/lib/constants";
 import type { Restaurant } from "@/lib/types";
 import { directUpload } from "@/lib/upload";
 import { formatMNT } from "@/lib/utils";
 import { AmenityIcon } from "@/components/amenity-icon";
+import { VenueIcon } from "@/components/venue-icon";
 
 type Step = { label: string; state: "waiting" | "running" | "done" | "error"; note?: string };
 
@@ -100,8 +101,31 @@ export function ProfileForm({ restaurant, userId }: { restaurant: Restaurant | n
   return (
     <form action={action} className="grid gap-5 sm:grid-cols-2">
       {r && <input type="hidden" name="id" value={r.id} />}
+      <fieldset className="space-y-2 sm:col-span-2">
+        <legend className="mb-2 text-sm font-medium">Газрын төрөл</legend>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {VENUE_TYPES.map((v) => (
+            <label
+              key={v.key}
+              className="group flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-3 text-sm font-medium transition-colors hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-brand-soft has-[:checked]:text-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+            >
+              <input
+                type="radio"
+                name="venue_type"
+                value={v.key}
+                defaultChecked={(r?.venue_type ?? "restaurant") === v.key}
+                className="sr-only"
+              />
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-foreground/70 group-has-[:checked]:bg-primary group-has-[:checked]:text-white">
+                <VenueIcon type={v.key} className="h-4 w-4" />
+              </span>
+              {v.plural}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="name">Рестораны нэр</Label>
+        <Label htmlFor="name">Газрын нэр</Label>
         <Input id="name" name="name" defaultValue={r?.name} required />
       </div>
 

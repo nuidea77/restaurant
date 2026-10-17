@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DatesManager } from "@/components/dashboard/dates-manager";
+import { EventManager } from "@/components/dashboard/event-manager";
 import { ImageManager } from "@/components/dashboard/image-manager";
 import { MenuUploader } from "@/components/dashboard/menu-uploader";
 import { PackageList } from "@/components/dashboard/package-list";
 import { ProfileForm } from "@/components/dashboard/profile-form";
-import { ArrowLeft, ArrowUpRight, CalendarDays, CheckCircle2, CreditCard, Images, Sparkles, Store } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, CheckCircle2, CreditCard, Images, PartyPopper, Sparkles, Store } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardBar } from "@/components/ui/card";
 import { Divider, Section } from "@/components/ui/frame";
 import { currentUserId } from "@/auth";
 import { LISTING_FEE } from "@/lib/constants";
-import { getOwnedRestaurant, getPackages } from "@/lib/queries";
+import { getOwnedRestaurant, getPackages, getVenueEvents } from "@/lib/queries";
 import { formatMNT } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string }> };
@@ -23,7 +24,7 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
   const restaurant = await getOwnedRestaurant((await params).id, userId);
   if (!restaurant) notFound();
   const justPaid = (await searchParams).paid === "1";
-  const packages = await getPackages(restaurant.id, false);
+  const [packages, events] = await Promise.all([getPackages(restaurant.id, false), getVenueEvents(restaurant.id)]);
 
   const pendingCount = packages.filter((p) => !p.is_verified).length;
 
@@ -35,10 +36,10 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4" /> Миний ресторанууд
+              <ArrowLeft className="h-4 w-4" /> Миний газрууд
             </Link>
             <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">
-              {restaurant ? restaurant.name : "Рестораны удирдлага"}
+              {restaurant ? restaurant.name : "Газрын удирдлага"}
             </h1>
           </div>
           {restaurant.is_paid ? (
@@ -53,13 +54,13 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
         </div>
         {justPaid && (
           <div className="mt-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            <CheckCircle2 className="h-4 w-4" /> Төлбөр амжилттай. Ресторан тань баталгаажсан багцтайгаар нийтэд харагдана.
+            <CheckCircle2 className="h-4 w-4" /> Төлбөр амжилттай. Таны газар баталгаажсан багцтайгаар нийтэд харагдана.
           </div>
         )}
         {!restaurant.is_paid && (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <span>
-              Төлбөр төлөгдөөгүй тул ресторан нийтэд харагдахгүй байна. Та цэс, зургаа одооноос бэлдэж болно.
+              Төлбөр төлөгдөөгүй тул газар тань нийтэд харагдахгүй байна. Та цэс, зураг, эвентээ одооноос бэлдэж болно.
             </span>
             <Link href={`/dashboard/r/${restaurant.id}/pay`} className="font-medium underline">
               Төлбөр төлөх
@@ -87,12 +88,21 @@ export default async function ManageRestaurantPage({ params, searchParams }: Pro
 
         {restaurant && (
           <Card className="overflow-hidden">
+            <CardBar icon={<PartyPopper />} title="Шинэ жилийн эвентүүд" count={events.length} />
+            <div className="p-5">
+              <EventManager restaurantId={restaurant.id} events={events} />
+            </div>
+          </Card>
+        )}
+
+        {restaurant && (
+          <Card className="overflow-hidden">
             <CardBar icon={<CalendarDays />} title="Захиалга авах өдрүүд" count={restaurant.dates.length} />
             <div className="grid gap-6 p-5 md:grid-cols-[1fr_minmax(0,22rem)]">
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>
                   Хүлээн авалт хийх боломжтой (заал сул) өдрүүдээ хуанлиас дарж сонгоно уу. Сонгосон өдрүүд таны
-                  рестораны хуудсанд харагдах ба хэрэглэгчид өдрөөр шүүж хайна.
+                  газрын хуудсанд харагдах ба хэрэглэгчид өдрөөр шүүж хайна.
                 </p>
                 <p>Захиалга орж дүүрсэн өдрийг дахин дарж хасаад хадгална уу.</p>
               </div>

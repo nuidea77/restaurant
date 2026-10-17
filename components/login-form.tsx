@@ -26,7 +26,7 @@ export function LoginForm({ verifyMode }: { verifyMode: "verifymn" | "demo" }) {
       <Card className="w-full max-w-sm shadow-xl shadow-black/5">
         <CardHeader className="items-center pt-8 text-center">
           <Logo />
-          <CardTitle className="mt-4 text-xl">{mode === "signin" ? "Ресторан эзэмшигч нэвтрэх" : "Ресторан бүртгүүлэх"}</CardTitle>
+          <CardTitle className="mt-4 text-xl">{mode === "signin" ? "Газар эзэмшигч нэвтрэх" : "Газар бүртгүүлэх"}</CardTitle>
           <p className="text-sm text-muted-foreground">
             {mode === "signin"
               ? "Цэс, багцаа удирдахын тулд нэвтэрнэ үү."

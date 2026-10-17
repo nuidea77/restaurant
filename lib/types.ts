@@ -2,6 +2,7 @@ export type Restaurant = {
   id: string;
   owner_id: string;
   name: string;
+  venue_type: string;
   city: string;
   district: string;
   address: string;
@@ -39,6 +40,7 @@ export type RestaurantSearchRow = Pick<
   Restaurant,
   | "id"
   | "name"
+  | "venue_type"
   | "city"
   | "district"
   | "address"
@@ -65,4 +67,29 @@ export type Payment = {
   paid_at: string | null;
   byl_checkout_id?: number | null;
   byl_checkout_url?: string | null;
+};
+
+export type EventItem = {
+  id: string;
+  restaurant_id: string;
+  title: string;
+  /** "YYYY-MM-DD" */
+  event_date: string;
+  /** "HH:MM" */
+  start_time: string | null;
+  artists: string[];
+  capacity: number;
+  ticket_price: number;
+  items: string[];
+  description: string | null;
+};
+
+/** Нийтийн жагсаалтад газрын мэдээлэлтэй хамт. */
+export type EventListRow = EventItem & {
+  venue_name: string;
+  venue_type: string;
+  city: string;
+  district: string;
+  phone: string;
+  cover: string | null;
 };

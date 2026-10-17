@@ -70,6 +70,20 @@ export const CAPACITY_RANGES = [
   { key: "250+", label: "250+ хүн", min: 250, max: null },
 ] as const;
 
+export const VENUE_TYPES = [
+  { key: "restaurant", label: "Ресторан", plural: "Ресторан" },
+  { key: "lounge", label: "Лаунж", plural: "Лаунж" },
+  { key: "house", label: "Хаус", plural: "Хаус" },
+  { key: "resort", label: "Амралтын газар", plural: "Түрээсийн амралтын газар" },
+] as const;
+
+export type VenueType = (typeof VENUE_TYPES)[number]["key"];
+export const VENUE_TYPE_KEYS = VENUE_TYPES.map((v) => v.key) as [VenueType, ...VenueType[]];
+export const venueTypeLabel = (key: string) => VENUE_TYPES.find((v) => v.key === key)?.label ?? "Ресторан";
+
+/** Эвентийн 1 хүний үнийн дээд хязгаарын сонголтууд (₮). */
+export const EVENT_PRICE_CAPS = [100_000, 200_000, 300_000, 500_000];
+
 export const AMENITIES = [
   { key: "has_host", label: "Хөтлөгчтэй", short: "Хөтлөгч", hint: "Мэргэжлийн хөтлөгч" },
   { key: "has_stage", label: "Тайзтай", short: "Тайз", hint: "Үзүүлбэр, тоглолтын тайз" },
@@ -95,5 +109,5 @@ export const UPLOAD_FOLDERS = {
 
 export type UploadFolder = keyof typeof UPLOAD_FOLDERS;
 
-/** Нэг рестораныг нийтлэх төлбөр (₮). */
+/** Нэг газрыг нийтлэх төлбөр (₮). */
 export const LISTING_FEE = 50_000;

@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "@/lib/db";
-import type { MenuPackage, OwnerRestaurant, Restaurant, RestaurantSearchRow } from "@/lib/types";
+import type { EventItem, EventListRow, MenuPackage, OwnerRestaurant, Restaurant, RestaurantSearchRow } from "@/lib/types";
 
 
 export type SearchFilters = {
@@ -14,14 +14,16 @@ export type SearchFilters = {
   hasStage?: boolean;
   hasScreen?: boolean;
   hasParking?: boolean;
-  /** "YYYY-MM-DD" — тухайн өдөр захиалга авдаг ресторан. */
+  /** "YYYY-MM-DD" — тухайн өдөр захиалга авдаг газар. */
   date?: string;
+  /** Газрын төрөл (VENUE_TYPES). */
+  type?: string;
 };
 
 /** Баталгаажсан багцтай ресторануудыг 1 хүний үнэ, багтаамж, дүүрэг, нөхцөлөөр шүүнэ. */
 export function searchRestaurants(f: SearchFilters) {
   return sql<RestaurantSearchRow>`
-    select r.id, r.name, r.city, r.district, r.address, r.phone, r.capacity,
+    select r.id, r.name, r.venue_type, r.city, r.district, r.address, r.phone, r.capacity,
            r.has_host, r.has_stage, r.has_screen, r.has_parking, r.images,
            min(p.price_per_person)::float8 as min_price,
            max(p.price_per_person)::float8 as max_price,
@@ -42,6 +44,7 @@ export function searchRestaurants(f: SearchFilters) {
       and (${!!f.hasScreen} = false or r.has_screen)
       and (${!!f.hasParking} = false or r.has_parking)
       and (${f.date ?? null}::date is null or ${f.date ?? null}::date = any(r.available_dates))
+      and (${f.type ?? null}::text is null or r.venue_type = ${f.type ?? null}::text)
     group by r.id
     order by min(p.price_per_person) asc`;
 }
@@ -85,8 +88,10 @@ export function getPackages(restaurantId: string, verifiedOnly: boolean) {
 
 /** Hero хэсгийн тоон үзүүлэлт — зөвхөн баталгаажсан багцтай ресторанууд. */
 export async function getSiteStats() {
-  const [row] = await sql<{ restaurants: number; packages: number; districts: number; min_price: number | null }>`
+  const [row] = await sql<{ restaurants: number; packages: number; districts: number; events: number; min_price: number | null }>`
     select count(distinct r.id)::int as restaurants,
+           (select count(*) from events e join restaurants er on er.id = e.restaurant_id
+             where er.is_paid and e.event_date >= (now() at time zone 'Asia/Ulaanbaatar')::date)::int as events,
            count(p.id)::int as packages,
            count(distinct r.district)::int as districts,
            min(p.price_per_person)::float8 as min_price
@@ -105,4 +110,45 @@ export function getFeaturedRestaurants(limit = 5) {
       and exists (select 1 from menu_packages p where p.restaurant_id = r.id and p.is_verified)
     order by r.capacity desc
     limit ${limit}`;
+}
+
+// ---------- Эвентүүд ----------
+
+export type EventFilters = { date?: string; maxPrice?: number; type?: string; from: string };
+
+/** Нийтэд харагдах (төлбөр төлөгдсөн газрын) удахгүй болох эвентүүд, огноогоор эрэмбэлсэн. */
+export function searchEvents(f: EventFilters) {
+  return sql<EventListRow>`
+    select e.id, e.restaurant_id, e.title, to_char(e.event_date, 'YYYY-MM-DD') as event_date, e.start_time,
+           e.artists, e.capacity, e.ticket_price::float8 as ticket_price, e.items, e.description,
+           r.name as venue_name, r.venue_type, r.city, r.district, r.phone, r.images[1] as cover
+    from events e join restaurants r on r.id = e.restaurant_id
+    where r.is_paid and e.event_date >= ${f.from}::date
+      and (${f.date ?? null}::date is null or e.event_date = ${f.date ?? null}::date)
+      and (${f.maxPrice ?? null}::numeric is null or e.ticket_price <= ${f.maxPrice ?? null}::numeric)
+      and (${f.type ?? null}::text is null or r.venue_type = ${f.type ?? null}::text)
+    order by e.event_date, e.start_time nulls last, e.ticket_price`;
+}
+
+export async function getEvent(id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [e] = await sql<EventListRow & { address: string; latitude: number | null; longitude: number | null }>`
+    select e.id, e.restaurant_id, e.title, to_char(e.event_date, 'YYYY-MM-DD') as event_date, e.start_time,
+           e.artists, e.capacity, e.ticket_price::float8 as ticket_price, e.items, e.description,
+           r.name as venue_name, r.venue_type, r.city, r.district, r.phone, r.images[1] as cover,
+           r.address, r.latitude, r.longitude
+    from events e join restaurants r on r.id = e.restaurant_id
+    where e.id = ${id} and r.is_paid`;
+  return e ?? null;
+}
+
+/** Нэг газрын эвентүүд. `upcomingFrom` өгвөл зөвхөн тэр өдрөөс хойшхийг. */
+export function getVenueEvents(restaurantId: string, upcomingFrom?: string) {
+  return sql<EventItem>`
+    select id, restaurant_id, title, to_char(event_date, 'YYYY-MM-DD') as event_date, start_time,
+           artists, capacity, ticket_price::float8 as ticket_price, items, description
+    from events
+    where restaurant_id = ${restaurantId}
+      and (${upcomingFrom ?? null}::date is null or event_date >= ${upcomingFrom ?? null}::date)
+    order by event_date, start_time nulls last`;
 }

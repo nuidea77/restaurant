@@ -2,7 +2,7 @@
 // Vercel дээр `npm run build`-ийн өмнө автоматаар ажиллана. Гараар: `npm run db:migrate`.
 import { readFile } from "node:fs/promises";
 import { connect, findDatabaseUrl } from "./neon-node.mjs";
-import { demoDates, seedDemo } from "./seed-core.mjs";
+import { demoDates, seedDemo, seedDemoEvents } from "./seed-core.mjs";
 
 const url = findDatabaseUrl();
 if (!url) {
@@ -28,6 +28,10 @@ for (const r of demo) {
   const n = Number(/^demo(\d+)@/.exec(r.email)?.[1] ?? 1);
   await db.sql`update restaurants set available_dates = ${demoDates(n)}::date[] where id = ${r.id}`;
 }
+
+// Өмнө нь seed хийгдсэн демо газруудад төрөл, Шинэ жилийн эвент нэмнэ (нэг удаа).
+const added = await seedDemoEvents(db);
+if (added) console.log(`[migrate] Демо газруудад ${added} эвент нэмлээ`);
 
 if (process.env.DEMO_DATA !== "false") {
   const { rows } = await db.sql`select count(*)::int as n from restaurants`;

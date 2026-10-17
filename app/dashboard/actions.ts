@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { CITIES, DISTRICTS, UB } from "@/lib/constants";
+import { CITIES, DISTRICTS, UB, VENUE_TYPE_KEYS } from "@/lib/constants";
 import { pricePerPerson } from "@/lib/pricing";
 import { verifiedUserId } from "@/lib/guards";
 import { sql } from "@/lib/db";
@@ -25,6 +25,7 @@ const optionalCoord = z.preprocess((v) => (v === "" || v == null ? null : Number
 
 const ProfileSchema = z.object({
   name: z.string().trim().min(1, "Нэр оруулна уу").max(255),
+  venue_type: z.enum(VENUE_TYPE_KEYS, { message: "Газрын төрөл сонгоно уу" }),
   city: z.enum(CITIES, { message: "Хот / аймаг сонгоно уу" }),
   district: z.string().trim().min(1, "Дүүрэг / сум оруулна уу").max(100),
   address: z.string().trim().min(1, "Хаяг оруулна уу"),
@@ -57,10 +58,10 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
   const id = String(form.get("id") ?? "");
 
   if (id) {
-    // Засах — зөвхөн өөрийн рестораныг.
+    // Засах — зөвхөн өөрийн газрыг.
     const rows = await sql`
       update restaurants set
-        name = ${d.name}, city = ${d.city}, district = ${d.district}, address = ${d.address}, phone = ${d.phone},
+        name = ${d.name}, venue_type = ${d.venue_type}, city = ${d.city}, district = ${d.district}, address = ${d.address}, phone = ${d.phone},
         capacity = ${d.capacity}, description = ${d.description}, latitude = ${d.latitude}, longitude = ${d.longitude},
         has_host = ${d.has_host}, has_stage = ${d.has_stage}, has_screen = ${d.has_screen}, has_parking = ${d.has_parking}
       where id = ${id}::uuid and owner_id = ${userId}
@@ -70,11 +71,11 @@ export async function saveProfile(_prev: ActionResult | null, form: FormData): P
     return { ok: true };
   }
 
-  // Шинэ ресторан — төлбөр төлөгдтөл нийтэд харагдахгүй (is_paid = false).
+  // Шинэ газар — төлбөр төлөгдтөл нийтэд харагдахгүй (is_paid = false).
   const [created] = await sql<{ id: string }>`
-    insert into restaurants (owner_id, name, city, district, address, phone, capacity, description,
+    insert into restaurants (owner_id, name, venue_type, city, district, address, phone, capacity, description,
       latitude, longitude, has_host, has_stage, has_screen, has_parking, is_paid)
-    values (${userId}, ${d.name}, ${d.city}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
+    values (${userId}, ${d.name}, ${d.venue_type}, ${d.city}, ${d.district}, ${d.address}, ${d.phone}, ${d.capacity}, ${d.description},
       ${d.latitude}, ${d.longitude}, ${d.has_host}, ${d.has_stage}, ${d.has_screen}, ${d.has_parking}, false)
     returning id`.catch(() => []);
   if (!created) return { ok: false, error: "Хадгалж чадсангүй" };
@@ -191,4 +192,61 @@ export async function payWithByl(paymentId: string): Promise<ActionResult> {
     return { ok: false, error: "Byl-тэй холбогдож чадсангүй. Түр хүлээгээд дахин оролдоно уу." };
   }
   redirect(url);
+}
+
+// ---------- Эвентүүд ----------
+
+const lines = z.array(z.string().trim().max(200)).max(50).transform((a) => a.filter(Boolean));
+
+const EventSchema = z.object({
+  title: z.string().trim().min(1, "Эвентийн нэр оруулна уу").max(255),
+  event_date: z.string().refine(isValidISODate, "Огноо сонгоно уу"),
+  start_time: z
+    .string()
+    .trim()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$|^$/, "Эхлэх цаг буруу")
+    .transform((v) => v || null),
+  artists: lines,
+  capacity: z.coerce.number().int().positive("Хүний тоо 0-ээс их байна"),
+  ticket_price: z.coerce.number().int().nonnegative("1 хүний үнэ оруулна уу"),
+  items: lines,
+  description: z.string().trim().max(2000).optional().transform((v) => v || null),
+});
+
+/** Эвент нэмэх (id-гүй) эсвэл засах. Зөвхөн өөрийн газарт. */
+export async function saveEvent(restaurantId: string, id: string | null, input: unknown): Promise<ActionResult> {
+  const userId = await requireUser();
+  const parsed = EventSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const e = parsed.data;
+  if (!id && e.event_date < todayISO()) return { ok: false, error: "Өнгөрсөн өдөр эвент нэмэх боломжгүй" };
+
+  const rows = id
+    ? await sql`
+        update events set title = ${e.title}, event_date = ${e.event_date}::date, start_time = ${e.start_time},
+          artists = ${e.artists}, capacity = ${e.capacity}, ticket_price = ${e.ticket_price}, items = ${e.items},
+          description = ${e.description}
+        where id = ${id}::uuid and restaurant_id = ${restaurantId}::uuid
+          and restaurant_id in (select id from restaurants where owner_id = ${userId})
+        returning id`
+    : await sql`
+        insert into events (restaurant_id, title, event_date, start_time, artists, capacity, ticket_price, items, description)
+        select id, ${e.title}, ${e.event_date}::date, ${e.start_time}, ${e.artists}, ${e.capacity}, ${e.ticket_price},
+          ${e.items}, ${e.description}
+        from restaurants where id = ${restaurantId}::uuid and owner_id = ${userId}
+        returning id`;
+  if (rows.length === 0) return { ok: false, error: "Хадгалж чадсангүй" };
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, id: rows[0].id as string };
+}
+
+export async function deleteEvent(id: string): Promise<ActionResult> {
+  const userId = await requireUser();
+  const rows = await sql`
+    delete from events
+    where id = ${id}::uuid and restaurant_id in (select id from restaurants where owner_id = ${userId})
+    returning id`;
+  if (rows.length === 0) return { ok: false, error: "Устгаж чадсангүй" };
+  revalidatePath("/dashboard", "layout");
+  return { ok: true };
 }

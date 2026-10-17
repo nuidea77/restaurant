@@ -16,9 +16,9 @@ export default async function NewRestaurantPage() {
     <>
       <Section className="hero-glow pb-8">
         <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Миний ресторанууд
+          <ArrowLeft className="h-4 w-4" /> Миний газрууд
         </Link>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Ресторан нэмэх</h1>
+        <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Газар нэмэх</h1>
         <ol className="mt-4 flex flex-wrap gap-2 text-sm">
           <Step n={1} active>
             Мэдээлэл, байршил, цэс
@@ -30,7 +30,7 @@ export default async function NewRestaurantPage() {
       <Divider />
       <Section>
         <Card className="overflow-hidden">
-          <CardBar icon={<Store />} title="Рестораны мэдээлэл" />
+          <CardBar icon={<Store />} title="Газрын мэдээлэл" />
           <div className="p-5">
             <ProfileForm restaurant={null} userId={userId} />
           </div>

@@ -7,8 +7,8 @@ import { Frame } from "@/components/ui/frame";
 import { envDiagnostics, missingRequiredEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Шинэ жилийн хүлээн авалт — Ресторан хайх",
-  description: "Улаанбаатарын ресторануудын Шинэ жилийн багцыг байршил, багтаамж, 1 хүний үнээр харьцуулж хайх.",
+  title: "Шинэ жилийн хүлээн авалт — Газар, эвент хайх",
+  description: "Ресторан, лаунж, хаус, амралтын газруудын Шинэ жилийн багц, эвентүүдийг байршил, багтаамж, 1 хүний үнээр харьцуулж хайх.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

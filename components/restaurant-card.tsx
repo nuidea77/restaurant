@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { CalendarCheck, MapPin, Users, UtensilsCrossed } from "lucide-react";
-import { AMENITIES, UB } from "@/lib/constants";
+import { AMENITIES, UB, venueTypeLabel } from "@/lib/constants";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
 import { AmenityIcon } from "@/components/amenity-icon";
 import { formatDayMN } from "@/lib/dates";
+import { VenueIcon } from "@/components/venue-icon";
 
 export function RestaurantCard({ r, date }: { r: RestaurantSearchRow; date?: string }) {
   const cover = r.images?.[0];
@@ -33,6 +34,8 @@ export function RestaurantCard({ r, date }: { r: RestaurantSearchRow; date?: str
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur">
+          <VenueIcon type={r.venue_type} className="h-3.5 w-3.5 text-primary" /> {venueTypeLabel(r.venue_type)}
+          <span className="text-muted-foreground">·</span>
           <MapPin className="h-3.5 w-3.5 text-primary" /> {place}
         </span>
         <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">

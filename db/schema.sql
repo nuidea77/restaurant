@@ -150,3 +150,23 @@ create index if not exists idx_phone_challenges_phone on phone_challenges(phone,
 -- Захиалга авах боломжтой өдрүүд (эзэмшигч хуанлиас сонгоно)
 alter table restaurants add column if not exists available_dates date[] not null default '{}';
 create index if not exists idx_restaurant_available_dates on restaurants using gin (available_dates);
+
+-- Газрын төрөл: ресторан, лаунж, хаус, түрээсийн амралтын газар
+alter table restaurants add column if not exists venue_type varchar(20) not null default 'restaurant';
+
+-- Шинэ жилийн эвентүүд (газар бүр олон эвент зохион байгуулна)
+create table if not exists events (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  title varchar(255) not null,
+  event_date date not null,
+  start_time varchar(5),
+  artists text[] not null default '{}',
+  capacity int not null check (capacity > 0),
+  ticket_price numeric not null check (ticket_price >= 0),
+  items text[] not null default '{}',
+  description text,
+  created_at timestamp with time zone default now()
+);
+create index if not exists idx_events_date on events(event_date);
+create index if not exists idx_events_restaurant on events(restaurant_id);

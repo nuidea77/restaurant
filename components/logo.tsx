@@ -6,7 +6,7 @@ export function Logo() {
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-[13px] font-black tracking-tight text-white">
         ШЖ
       </span>
-      <span className="hidden whitespace-nowrap text-lg font-extrabold tracking-tight min-[360px]:inline">
+      <span className="hidden whitespace-nowrap text-lg font-extrabold tracking-tight sm:inline">
         Хүлээн авалт<span className="text-brand">.</span>
       </span>
     </Link>

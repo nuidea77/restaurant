@@ -29,7 +29,7 @@ type MapView = ComponentType<{
 type Props = { city: string; initial: { lat: number | null; lng: number | null } };
 
 /**
- * Газрын зураг дээр рестораны байршлыг сонгоно. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY байвал Google Maps
+ * Газрын зураг дээр газрын байршлыг сонгоно. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY байвал Google Maps
  * (Maps JavaScript API + Geocoding API), үгүй бол OpenStreetMap. Сонгосон утга latitude/longitude
  * нэртэй hidden input-ээр форм руу явна.
  */
@@ -156,7 +156,7 @@ function PickerShell({ city, initial, MapView, geocode }: Props & { MapView: Map
       <MapView center={view.center} zoom={view.zoom} position={position} onPick={(lat, lng) => pick(lat, lng)} />
       {(message || !position) && (
         <p className="text-xs text-muted-foreground">
-          {message ?? "Газрын зураг дээр дарж рестораны байршлыг тэмдэглэнэ үү."}
+          {message ?? "Газрын зураг дээр дарж газрын байршлыг тэмдэглэнэ үү."}
         </p>
       )}
       <input type="hidden" name="latitude" value={position?.[0] ?? ""} />

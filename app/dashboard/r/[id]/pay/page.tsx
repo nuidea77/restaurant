@@ -13,7 +13,7 @@ import { formatMNT } from "@/lib/utils";
 
 const STATUS_MESSAGES: Record<string, string> = {
   open: "Төлбөр хараахан төлөгдөөгүй байна.",
-  pending: "Таны шилжүүлгийг рестораны данс эзэмшигч шалгаж байна. Баталгаажмагц автоматаар идэвхжинэ.",
+  pending: "Таны шилжүүлгийг платформын данс эзэмшигч шалгаж байна. Баталгаажмагц автоматаар идэвхжинэ.",
   expired: "Төлбөрийн хуудасны хугацаа дууссан. Дахин төлнө үү.",
   error: "Byl-ээс төлөв шалгаж чадсангүй. Түр хүлээгээд дахин шалгана уу.",
 };
@@ -42,7 +42,7 @@ export default async function PayPage({ params, searchParams }: Props) {
           <ArrowLeft className="h-4 w-4" /> {restaurant.name}
         </Link>
         <h1 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl">Нийтлэлийн төлбөр</h1>
-        <p className="mt-2 text-muted-foreground">Төлбөр төлөгдмөгц ресторан тань хайлтад гарч эхэлнэ.</p>
+        <p className="mt-2 text-muted-foreground">Төлбөр төлөгдмөгц таны газар хайлтад гарч эхэлнэ.</p>
       </Section>
       <Divider />
       <Section>
@@ -50,7 +50,7 @@ export default async function PayPage({ params, searchParams }: Props) {
           <Card className="overflow-hidden">
             <CardBar icon={<Receipt />} title="Нэхэмжлэх" count={payment?.reference} />
             <dl className="divide-y text-sm">
-              <Row label="Ресторан" value={restaurant.name} />
+              <Row label="Газар" value={restaurant.name} />
               <Row label="Үйлчилгээ" value="Шинэ жилийн хүлээн авалтын платформд нийтлэх" />
               <Row label="Гүйлгээний утга" value={<code className="font-mono">{payment?.reference ?? "—"}</code>} />
               <div className="flex items-center justify-between px-5 py-4">

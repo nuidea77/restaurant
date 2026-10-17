@@ -18,7 +18,7 @@ export function Availability({ dates, phone, initialDate }: { dates: string[]; p
   if (!upcoming.length) {
     return (
       <p className="text-sm text-muted-foreground">
-        Захиалга авах өдрүүдээ ресторан хараахан оруулаагүй байна. Сул өдрийг утсаар лавлана уу.
+        Захиалга авах өдрүүдээ газар хараахан оруулаагүй байна. Сул өдрийг утсаар лавлана уу.
       </p>
     );
   }
@@ -37,7 +37,7 @@ export function Availability({ dates, phone, initialDate }: { dates: string[]; p
         </div>
         <p className="text-sm text-muted-foreground">
           Нийт <span className="font-semibold text-foreground">{upcoming.length}</span> өдөр захиалга авах боломжтой.
-          Өдрөө сонгоод ресторантай холбогдоно уу.
+          Өдрөө сонгоод газартай холбогдоно уу.
         </p>
         {active ? (
           <div className="space-y-3 rounded-xl border border-primary/30 bg-brand-soft p-4">

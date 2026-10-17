@@ -11,10 +11,11 @@ import { Card, CardBar } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect as Select } from "@/components/ui/native-select";
-import { AMENITIES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
+import { AMENITIES, VENUE_TYPES, BUDGET_MAX, BUDGET_MIN, BUDGET_STEP, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
 import { formatMNT } from "@/lib/utils";
 import { todayISO } from "@/lib/dates";
 import { AmenityIcon } from "@/components/amenity-icon";
+import { VenueIcon } from "@/components/venue-icon";
 
 export type FilterValues = {
   city?: string;
@@ -24,6 +25,7 @@ export type FilterValues = {
   capacity?: string;
   amenities: string[];
   date?: string;
+  type?: string;
 };
 
 const chip =
@@ -39,7 +41,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
   // Гар утсанд шүүлтүүр анхнаасаа хураагдсан байна (жагсаалтыг доош түлхэхгүй).
   // Шүүлтүүр сонгосны дараа (URL өөрчлөгдөж дахин үүсэхэд) нээлттэй хэвээр үлдэнэ.
   const [open, setOpen] = useState(
-    Boolean(initial.city || initial.district || initial.capacity || initial.date || initial.amenities.length) ||
+    Boolean(initial.city || initial.district || initial.capacity || initial.date || initial.type || initial.amenities.length) ||
       initial.minPrice > BUDGET_MIN ||
       initial.maxPrice < BUDGET_MAX,
   );
@@ -49,6 +51,7 @@ export function Filters({ initial }: { initial: FilterValues }) {
     (initial.district ? 1 : 0) +
     (initial.capacity ? 1 : 0) +
     (initial.date ? 1 : 0) +
+    (initial.type ? 1 : 0) +
     initial.amenities.length +
     (initial.minPrice > BUDGET_MIN || initial.maxPrice < BUDGET_MAX ? 1 : 0);
 
@@ -95,6 +98,22 @@ export function Filters({ initial }: { initial: FilterValues }) {
         }}
         className={`space-y-6 p-4 ${open ? "block" : "hidden"} lg:block`}
       >
+        <fieldset className="space-y-2">
+          <legend className="mb-2 text-sm font-medium">Газрын төрөл</legend>
+          <div className="flex flex-wrap gap-2">
+            <label className={chip}>
+              <input type="radio" name="type" value="" defaultChecked={!initial.type} className="sr-only" />
+              Бүгд
+            </label>
+            {VENUE_TYPES.map((v) => (
+              <label key={v.key} className={`${chip} inline-flex items-center gap-1.5`}>
+                <input type="radio" name="type" value={v.key} defaultChecked={initial.type === v.key} className="sr-only" />
+                <VenueIcon type={v.key} className="h-3.5 w-3.5" /> {v.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <div className="space-y-2">
           <Label htmlFor="date">Хүлээн авалтын өдөр</Label>
           <div className="relative">

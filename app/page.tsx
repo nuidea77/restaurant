@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, FileUp, SearchX, Sparkles } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, FileUp, PartyPopper, SearchX, Sparkles } from "lucide-react";
 import { Filters, type FilterValues } from "@/components/filters";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Divider, Section } from "@/components/ui/frame";
-import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, CITIES, DISTRICTS, UB } from "@/lib/constants";
-import { getFeaturedRestaurants, getSiteStats, searchRestaurants } from "@/lib/queries";
+import { AMENITIES, BUDGET_MAX, BUDGET_MIN, CAPACITY_RANGES, CITIES, DISTRICTS, UB, VENUE_TYPE_KEYS } from "@/lib/constants";
+import { getFeaturedRestaurants, getSiteStats, searchEvents, searchRestaurants } from "@/lib/queries";
+import { EventCard } from "@/components/event-card";
 import type { RestaurantSearchRow } from "@/lib/types";
 import { formatMNT } from "@/lib/utils";
 import { isValidISODate, todayISO } from "@/lib/dates";
@@ -33,6 +34,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const maxPrice = num(one(sp.max));
   const capacity = CAPACITY_RANGES.find((c) => c.key === one(sp.capacity));
   const amenities = AMENITIES.filter((a) => one(sp[a.key]) === "1").map((a) => a.key);
+  const type = (VENUE_TYPE_KEYS as readonly string[]).includes(one(sp.type) ?? "") ? one(sp.type) : undefined;
   const rawDate = one(sp.date) ?? "";
   const date = isValidISODate(rawDate) && rawDate >= todayISO() ? rawDate : undefined;
 
@@ -51,6 +53,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       hasScreen: amenities.includes("has_screen"),
       hasParking: amenities.includes("has_parking"),
       date,
+      type,
     });
   } catch (err) {
     console.error("search failed", err);
@@ -65,11 +68,13 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     capacity: capacity?.key,
     amenities,
     date,
+    type,
   };
 
-  const [stats, featured] = await Promise.all([
+  const [stats, featured, upcoming] = await Promise.all([
     getSiteStats().catch(() => null),
     getFeaturedRestaurants().catch(() => []),
+    searchEvents({ from: todayISO() }).catch(() => []),
   ]);
 
   return (
@@ -78,14 +83,16 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
         {stats && stats.restaurants > 0 && (
           <div className="mx-auto inline-flex items-center justify-center divide-x rounded-full border bg-card px-1 py-1.5 text-xs sm:px-2 sm:text-sm text-muted-foreground shadow-sm">
             <span className="px-2 sm:px-3">
-              <b className="font-semibold text-foreground">{stats.restaurants}</b> ресторан
+              <b className="font-semibold text-foreground">{stats.restaurants}</b> газар
             </span>
             <span className="px-2 sm:px-3">
               <b className="font-semibold text-foreground">{stats.packages}</b> багц
             </span>
-            <span className="px-2 sm:px-3">
-              <b className="font-semibold text-foreground">{stats.districts}</b> дүүрэг
-            </span>
+            {stats.events > 0 && (
+              <span className="px-2 sm:px-3">
+                <b className="font-semibold text-foreground">{stats.events}</b> эвент
+              </span>
+            )}
             {stats.min_price != null && (
               <span className="px-2 sm:px-3">
                 <b className="font-semibold text-foreground">{formatMNT(stats.min_price)}</b>-өөс
@@ -99,15 +106,18 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           <span className="text-gradient">1 хүний үнээр сонго</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-foreground/75 sm:text-lg">
-          Ресторануудын багцыг байршил, заалны багтаамж, хөтлөгч, тайзаар шүүж — багцын нийт үнэ биш, нэг хүнд ногдох
-          бодит үнээр нь харьцуулаарай.
+          Ресторан, лаунж, хаус, түрээсийн амралтын газруудын багцыг байршил, багтаамж, хөтлөгч, тайзаар шүүж — нийт үнэ
+          биш, нэг хүнд ногдох бодит үнээр нь харьцуулаарай. Шинэ жилийн эвентүүд ч нэг дор.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a href="#results" className={buttonVariants({ variant: "dark", size: "lg" })}>
-            Ресторан хайх
+            Газар хайх
           </a>
+          <Link href="/events" className={buttonVariants({ size: "lg" })}>
+            <PartyPopper className="h-4 w-4" /> Эвентүүд
+          </Link>
           <Link href="/dashboard/new" className={buttonVariants({ variant: "outline", size: "lg" })}>
-            Ресторанаа нэмэх <ArrowUpRight className="h-4 w-4" />
+            Газраа нэмэх <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
               {featured.length >= 3 && (
@@ -134,14 +144,36 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
       <Divider />
 
+      {upcoming.length > 0 && (
+        <>
+          <Section>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Удахгүй болох эвентүүд</h2>
+                <p className="mt-1 text-muted-foreground">Шинэ жилийн тоглолт, үдэшлэгүүд — уран бүтээлчид, 1 хүний үнэтэй.</p>
+              </div>
+              <Link href="/events" className={buttonVariants({ variant: "outline" })}>
+                Бүх эвент <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {upcoming.slice(0, 3).map((e) => (
+                <EventCard key={e.id} e={e} />
+              ))}
+            </div>
+          </Section>
+          <Divider />
+        </>
+      )}
+
       <Section id="results" className="scroll-mt-16">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Ресторанууд</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Газрууд</h2>
             <p className="mt-1 text-muted-foreground">1 хүний хамгийн бага үнээр эрэмбэлсэн.</p>
           </div>
           <p className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground shadow-sm">
-            {error ? "Хайлт хийхэд алдаа гарлаа" : `${results.length} ресторан олдлоо`}
+            {error ? "Хайлт хийхэд алдаа гарлаа" : `${results.length} газар олдлоо`}
           </p>
         </div>
 
@@ -157,7 +189,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
                   <EmptyMedia variant="icon">
                     <SearchX />
                   </EmptyMedia>
-                  <EmptyTitle>Тохирох ресторан олдсонгүй</EmptyTitle>
+                  <EmptyTitle>Тохирох газар олдсонгүй</EmptyTitle>
                   <EmptyDescription>Шүүлтүүрээ өөрчилж эсвэл төсвөө нэмж үзээрэй.</EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -176,7 +208,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
       <Section id="how" className="scroll-mt-16">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Хэрхэн ажилладаг</h2>
-        <p className="mt-1 text-muted-foreground">Ресторан цэсээ оруулахад үлдсэнийг нь систем хийнэ.</p>
+        <p className="mt-1 text-muted-foreground">Газар цэс, эвентээ оруулахад үлдсэнийг нь систем хийнэ.</p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {HOW_STEPS.map((step, i) => (
             <div key={step.title} className="rounded-xl border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -199,7 +231,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 const HOW_STEPS = [
   {
     icon: <FileUp />,
-    title: "Ресторан цэсээ байршуулна",
+    title: "Газар цэсээ байршуулна",
     text: "PDF эсвэл зураг хэлбэрээр Шинэ жилийн цэсээ оруулна. Хэлбэр, загвар хамаагүй.",
   },
   {
